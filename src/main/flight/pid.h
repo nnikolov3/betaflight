@@ -24,7 +24,6 @@
 #include "common/time.h"
 #include "common/filter.h"
 #include "common/axis.h"
-
 #include "pg/pg.h"
 
 #define MAX_PID_PROCESS_DENOM       16
@@ -47,13 +46,11 @@
 
 // Full iterm suppression in setpoint mode at high-passed setpoint rate > 40deg/sec
 #define ITERM_RELAX_SETPOINT_THRESHOLD 40.0f
-#define ITERM_RELAX_CUTOFF_DEFAULT 15
+#define ITERM_RELAX_CUTOFF_DEFAULT 20
 
 // Anti gravity I constant
 #define AG_KI 21.586988f;
 
-#define ITERM_ACCELERATOR_GAIN_OFF 1000
-#define ITERM_ACCELERATOR_GAIN_MAX 30000
 typedef enum {
     PID_ROLL,
     PID_PITCH,
@@ -107,14 +104,6 @@ typedef enum {
     ITERM_RELAX_SETPOINT,
     ITERM_RELAX_TYPE_COUNT,
 } itermRelaxType_e;
-
-typedef enum ffInterpolationType_e {
-    FF_INTERPOLATE_OFF,
-    FF_INTERPOLATE_ON,
-    FF_INTERPOLATE_AVG2,
-    FF_INTERPOLATE_AVG3,
-    FF_INTERPOLATE_AVG4
-} ffInterpolationType_t;
 
 #define MAX_PROFILE_NAME_LENGTH 8u
 
@@ -200,7 +189,6 @@ typedef struct pidProfile_s {
     uint8_t ff_smooth_factor;               // Amount of smoothing for interpolated FF steps
     uint8_t dyn_lpf_curve_expo;             // set the curve for dynamic dterm lowpass filter
     uint8_t level_race_mode;                // NFE race mode - when true pitch setpoint calcualtion is gyro based in level mode
-    uint8_t vbat_sag_compensation;          // Reduce motor output by this percentage of the maximum compensation amount
 } pidProfile_t;
 
 PG_DECLARE_ARRAY(pidProfile_t, PID_PROFILE_COUNT, pidProfiles);
@@ -226,6 +214,7 @@ typedef struct pidAxisData_s {
     float Sum;
 } pidAxisData_t;
 
+<<<<<<< HEAD
 typedef union dtermLowpass_u {
     pt1Filter_t pt1Filter;
     biquadFilter_t biquadFilter;
@@ -366,6 +355,8 @@ typedef struct pidRuntime_s {
 
 extern pidRuntime_t pidRuntime;
 
+=======
+>>>>>>> 88a5996bb... added riscv
 extern const char pidNames[];
 
 extern pidAxisData_t pidData[3];
@@ -378,9 +369,15 @@ extern pt1Filter_t throttleLpf;
 void pidResetIterm(void);
 void pidStabilisationState(pidStabilisationState_e pidControllerState);
 void pidSetItermAccelerator(float newItermAccelerator);
+void pidInitFilters(const pidProfile_t *pidProfile);
+void pidInitConfig(const pidProfile_t *pidProfile);
+void pidInit(const pidProfile_t *pidProfile);
+void pidCopyProfile(uint8_t dstPidProfileIndex, uint8_t srcPidProfileIndex);
 bool crashRecoveryModeActive(void);
 void pidAcroTrainerInit(void);
 void pidSetAcroTrainerState(bool newState);
+void pidInitSetpointDerivativeLpf(uint16_t filterCutoff, uint8_t debugAxis, uint8_t filterType);
+void pidUpdateSetpointDerivativeLpf(uint16_t filterCutoff);
 void pidUpdateAntiGravityThrottleFilter(float throttle);
 bool pidOsdAntiGravityActive(void);
 bool pidOsdAntiGravityMode(void);

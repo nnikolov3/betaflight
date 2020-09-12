@@ -90,7 +90,7 @@ void targetConfiguration(void)
     mixerConfigMutable()->yaw_motors_reversed = true;
     imuConfigMutable()->small_angle = 180;
 
-    blackboxConfigMutable()->sample_rate = 1; // sample_rate is half of PID loop frequency
+    blackboxConfigMutable()->p_ratio = 128;
 
     /* Breadboard-specific settings for development purposes only
      */

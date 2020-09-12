@@ -22,8 +22,6 @@
 // Firmware related menu contents and support functions
 //
 
-#include <ctype.h>
-
 #include <stdbool.h>
 
 #include "platform.h"
@@ -70,9 +68,8 @@ static char accCalibrationStatus[CALIBRATION_STATUS_MAX_LENGTH];
 static char baroCalibrationStatus[CALIBRATION_STATUS_MAX_LENGTH];
 #endif
 
-static const void *cmsx_CalibrationOnDisplayUpdate(displayPort_t *pDisp, const OSD_Entry *selected)
+static const void *cmsx_CalibrationOnDisplayUpdate(const OSD_Entry *selected)
 {
-    UNUSED(pDisp);
     UNUSED(selected);
 
     tfp_sprintf(gyroCalibrationStatus, sensors(SENSOR_GYRO) ? gyroIsCalibrationComplete() ? CALIBRATION_STATUS_OK : CALIBRATION_STATUS_WAIT: CALIBRATION_STATUS_OFF);
@@ -137,7 +134,7 @@ static const OSD_Entry menuCalibrateAccEntries[] = {
     { NULL, OME_END, NULL, NULL, 0 }
 };
 
-CMS_Menu cmsx_menuCalibrateAcc = {
+static CMS_Menu cmsx_menuCalibrateAcc = {
 #ifdef CMS_MENU_DEBUG
     .GUARD_text = "ACCCALIBRATION",
     .GUARD_type = OME_MENU,
@@ -148,7 +145,7 @@ CMS_Menu cmsx_menuCalibrateAcc = {
     .entries = menuCalibrateAccEntries
 };
 
-const void *cmsCalibrateAccMenu(displayPort_t *pDisp, const void *self)
+static const void *cmsCalibrateAccMenu(displayPort_t *pDisp, const void *self)
 {
     UNUSED(self);
 
@@ -187,6 +184,7 @@ static CMS_Menu cmsx_menuCalibration = {
 
 // Info
 
+<<<<<<< HEAD
 #if defined(USE_BOARD_INFO)
 static char manufacturerId[MAX_MANUFACTURER_ID_LENGTH + 1];
 static char boardName[MAX_BOARD_NAME_LENGTH + 1];
@@ -201,17 +199,42 @@ static const void *cmsx_FirmwareInit(displayPort_t *pDisp)
     return NULL;
 }
 #endif
+=======
+static char infoGitRev[GIT_SHORT_REVISION_LENGTH + 1];
+static char infoTargetName[] = __TARGET__;
+
+static const void *cmsx_FirmwareInit(void)
+{
+    unsigned i;
+    for (i = 0 ; i < GIT_SHORT_REVISION_LENGTH ; i++) {
+        if (shortGitRevision[i] >= 'a' && shortGitRevision[i] <= 'f') {
+            infoGitRev[i] = shortGitRevision[i] - 'a' + 'A';
+        } else {
+            infoGitRev[i] = shortGitRevision[i];
+        }
+    }
+
+    infoGitRev[i] = 0x0; // Terminate string
+
+    return NULL;
+}
+>>>>>>> 88a5996bb... added riscv
 
 static const OSD_Entry menuFirmwareEntries[] = {
     { "--- INFO ---", OME_Label, NULL, NULL, 0 },
     { "FWID", OME_String, NULL, FC_FIRMWARE_IDENTIFIER, 0 },
     { "FWVER", OME_String, NULL, FC_VERSION_STRING, 0 },
+<<<<<<< HEAD
     { "GITREV", OME_String, NULL, __REVISION__, 0 },
     { "TARGET", OME_String, NULL, __TARGET__, 0 },
 #if defined(USE_BOARD_INFO)
     { "MFR", OME_String, NULL, manufacturerId, 0 },
     { "BOARD", OME_String, NULL, boardName, 0 },
 #endif
+=======
+    { "GITREV", OME_String, NULL, infoGitRev, 0 },
+    { "TARGET", OME_String, NULL, infoTargetName, 0 },
+>>>>>>> 88a5996bb... added riscv
     { "--- SETUP ---", OME_Label, NULL, NULL, 0 },
     { "CALIBRATE",     OME_Submenu, cmsMenuChange, &cmsx_menuCalibration, 0},
     { "BACK", OME_Back, NULL, NULL, 0 },
@@ -223,11 +246,15 @@ CMS_Menu cmsx_menuFirmware = {
     .GUARD_text = "MENUFIRMWARE",
     .GUARD_type = OME_MENU,
 #endif
+<<<<<<< HEAD
 #if defined(USE_BOARD_INFO)
     .onEnter = cmsx_FirmwareInit,
 #else
     .onEnter = NULL,
 #endif
+=======
+    .onEnter = cmsx_FirmwareInit,
+>>>>>>> 88a5996bb... added riscv
     .onExit = NULL,
     .onDisplayUpdate = NULL,
     .entries = menuFirmwareEntries

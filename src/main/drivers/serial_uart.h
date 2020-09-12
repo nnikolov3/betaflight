@@ -37,8 +37,7 @@ typedef enum {
     UARTDEV_5 = 4,
     UARTDEV_6 = 5,
     UARTDEV_7 = 6,
-    UARTDEV_8 = 7,
-    UARTDEV_9 = 8,
+    UARTDEV_8 = 7
 } UARTDevice_e;
 
 typedef struct uartPort_s {

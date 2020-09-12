@@ -151,6 +151,7 @@ static bool allMotorsAreIdle(void)
     return true;
 }
 
+<<<<<<< HEAD
 bool dshotStreamingCommandsAreEnabled(void)
 {
     return motorIsEnabled() && motorGetMotorEnableTimeMs() && millis() > motorGetMotorEnableTimeMs() + DSHOT_PROTOCOL_DETECTION_DELAY_MS;
@@ -175,11 +176,20 @@ static bool dshotCommandsAreEnabled(dshotCommandType_e commandType)
     }
 
     return ret;
+=======
+bool dshotCommandsAreEnabled(void)
+{
+    if (motorIsEnabled() && motorGetMotorEnableTimeMs() && millis() > motorGetMotorEnableTimeMs() + DSHOT_PROTOCOL_DETECTION_DELAY_MS) {
+        return true;
+    } else {
+        return false;
+    }
+>>>>>>> 88a5996bb... added riscv
 }
 
-void dshotCommandWrite(uint8_t index, uint8_t motorCount, uint8_t command, dshotCommandType_e commandType)
+void dshotCommandWrite(uint8_t index, uint8_t motorCount, uint8_t command, bool blocking)
 {
-    if (!isMotorProtocolDshot() || !dshotCommandsAreEnabled(commandType) || (command > DSHOT_MAX_COMMAND) || dshotCommandQueueFull()) {
+    if (!isMotorProtocolDshot() || !dshotCommandsAreEnabled() || (command > DSHOT_MAX_COMMAND) || dshotCommandQueueFull()) {
         return;
     }
 
@@ -209,7 +219,7 @@ void dshotCommandWrite(uint8_t index, uint8_t motorCount, uint8_t command, dshot
         break;
     }
 
-    if (commandType == DSHOT_CMD_TYPE_BLOCKING) {
+    if (blocking) {
         delayMicroseconds(DSHOT_INITIAL_DELAY_US - DSHOT_COMMAND_DELAY_US);
         for (; repeats; repeats--) {
             delayMicroseconds(DSHOT_COMMAND_DELAY_US);
@@ -230,7 +240,7 @@ void dshotCommandWrite(uint8_t index, uint8_t motorCount, uint8_t command, dshot
             dshotPwmDevice.vTable.updateComplete();
         }
         delayMicroseconds(delayAfterCommandUs);
-    } else if (commandType == DSHOT_CMD_TYPE_INLINE) {
+    } else {
         dshotCommandControl_t *commandControl = addCommand();
         if (commandControl) {
             commandControl->repeats = repeats;

@@ -144,7 +144,6 @@ typedef enum {
     OSD_RSSI_DBM_VALUE,
     OSD_RC_CHANNELS,
     OSD_CAMERA_FRAME,
-    OSD_EFFICIENCY,
     OSD_ITEM_COUNT // MUST BE LAST
 } osd_items_e;
 
@@ -275,7 +274,7 @@ typedef struct osdConfig_s {
     uint8_t overlay_radio_mode;
     char profile[OSD_PROFILE_COUNT][OSD_PROFILE_NAME_LENGTH + 1];
     uint16_t link_quality_alarm;
-    int16_t rssi_dbm_alarm;
+    uint8_t rssi_dbm_alarm;
     uint8_t gps_sats_show_hdop;
     int8_t rcChannels[OSD_RCCHANNELS_COUNT];  // RC channel values to display, -1 if none
     uint8_t displayPortDevice;                // osdDisplayPortDevice_e
@@ -307,7 +306,7 @@ typedef struct statistic_s {
     int16_t max_esc_temp;
     int32_t max_esc_rpm;
     uint16_t min_link_quality;
-    int16_t min_rssi_dbm;
+    uint8_t min_rssi_dbm;
 } statistic_t;
 
 extern timeUs_t resumeRefreshAt;

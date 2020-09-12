@@ -23,8 +23,6 @@
 
 #include "platform.h"
 
-#ifdef USE_ACC_BMA280
-
 #include "drivers/bus_i2c.h"
 
 #include "drivers/sensor.h"
@@ -73,4 +71,3 @@ bool bma280Detect(accDev_t *acc)
     acc->readFn = bma280Read;
     return true;
 }
-#endif

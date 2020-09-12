@@ -38,6 +38,8 @@
 
 #include "transponder_ir.h"
 
+typedef DMA_Stream_TypeDef dmaStream_t;
+
 volatile uint8_t transponderIrDataTransferInProgress = 0;
 
 static IO_t transponderIO = IO_NONE;
@@ -46,14 +48,12 @@ static uint16_t timerChannel = 0;
 static uint8_t output;
 static uint8_t alternateFunction;
 
-#if !(defined(STM32F7) || defined(STM32H7) || defined(STM32G4))
+#if !(defined(STM32F7) || defined(STM32H7))
 #error "Transponder (via HAL) not supported on this MCU."
 #endif
 
-#if defined(STM32H7)
+#ifdef STM32H7
 DMA_RAM transponder_t transponder;
-#elif defined(STM32G4)
-DMA_RAM_W transponder_t transponder;
 #else
 transponder_t transponder;
 #endif
@@ -126,7 +126,7 @@ void transponderIrHardwareInit(ioTag_t ioTag, transponder_t *transponder)
     __DMA2_CLK_ENABLE();
 
     /* Set the parameters to be configured */
-#if defined(STM32H7) || defined(STM32G4)
+#ifdef STM32H7
     hdma_tim.Init.Request = dmaChannel;
 #else
     hdma_tim.Init.Channel = dmaChannel;
@@ -138,12 +138,10 @@ void transponderIrHardwareInit(ioTag_t ioTag, transponder_t *transponder)
     hdma_tim.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim.Init.Mode = DMA_NORMAL;
     hdma_tim.Init.Priority = DMA_PRIORITY_HIGH;
-#if !defined(STM32G4)
     hdma_tim.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     hdma_tim.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
     hdma_tim.Init.MemBurst = DMA_MBURST_SINGLE;
     hdma_tim.Init.PeriphBurst = DMA_PBURST_SINGLE;
-#endif
 
     /* Set hdma_tim instance */
     hdma_tim.Instance = (DMA_ARCH_TYPE *)dmaRef;

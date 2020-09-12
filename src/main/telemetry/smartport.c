@@ -39,8 +39,6 @@
 
 #include "config/feature.h"
 
-#include "rx/frsky_crc.h"
-
 #include "drivers/accgyro/accgyro.h"
 #include "drivers/compass/compass.h"
 #include "drivers/sensor.h"
@@ -59,6 +57,7 @@
 
 #include "io/beeper.h"
 #include "io/gps.h"
+#include "io/motors.h"
 #include "io/serial.h"
 
 #include "msp/msp.h"
@@ -286,7 +285,7 @@ void smartPortSendByte(uint8_t c, uint16_t *checksum, serialPort_t *port)
     }
 
     if (checksum != NULL) {
-        frskyCheckSumStep(checksum, c);
+        *checksum += c;
     }
 }
 
@@ -301,8 +300,8 @@ void smartPortWriteFrameSerial(const smartPortPayload_t *payload, serialPort_t *
     for (unsigned i = 0; i < sizeof(smartPortPayload_t); i++) {
         smartPortSendByte(*data++, &checksum, port);
     }
-    frskyCheckSumFini(&checksum);
-    smartPortSendByte(checksum, NULL, port);
+    checksum = 0xff - ((checksum & 0xff) + (checksum >> 8));
+    smartPortSendByte((uint8_t)checksum, NULL, port);
 }
 
 static void smartPortWriteFrameInternal(const smartPortPayload_t *payload)
@@ -615,7 +614,7 @@ void processSmartPortTelemetry(smartPortPayload_t *payload, volatile bool *clear
                     cellCount = getBatteryCellCount();
                     vfasVoltage = cellCount ? getBatteryVoltage() / cellCount : 0;
                 }
-                smartPortSendPackage(id, vfasVoltage); // in 0.01V according to SmartPort spec
+                smartPortSendPackage(id, vfasVoltage); // given in 0.01V, convert to volts
                 *clearToSend = false;
                 break;
 #ifdef USE_ESC_SENSOR_TELEMETRY
@@ -635,7 +634,7 @@ void processSmartPortTelemetry(smartPortPayload_t *payload, volatile bool *clear
                 break;
 #endif
             case FSSP_DATAID_CURRENT    :
-                smartPortSendPackage(id, getAmperage() / 10); // in 0.1A according to SmartPort spec
+                smartPortSendPackage(id, getAmperage() / 10); // given in 10mA steps, unknown requested unit
                 *clearToSend = false;
                 break;
 #ifdef USE_ESC_SENSOR_TELEMETRY
@@ -697,21 +696,19 @@ void processSmartPortTelemetry(smartPortPayload_t *payload, volatile bool *clear
                 break;
 #endif
             case FSSP_DATAID_ALTITUDE   :
-                smartPortSendPackage(id, getEstimatedAltitudeCm()); // in cm according to SmartPort spec
+                smartPortSendPackage(id, getEstimatedAltitudeCm()); // unknown given unit, requested 100 = 1 meter
                 *clearToSend = false;
                 break;
             case FSSP_DATAID_FUEL       :
-                smartPortSendPackage(id, getMAhDrawn()); // given in mAh, should be in percent according to SmartPort spec
+                smartPortSendPackage(id, getMAhDrawn()); // given in mAh, unknown requested unit
                 *clearToSend = false;
                 break;
-#if defined(USE_VARIO)
             case FSSP_DATAID_VARIO      :
-                smartPortSendPackage(id, getEstimatedVario()); // in cm/s according to SmartPort spec
+                smartPortSendPackage(id, getEstimatedVario()); // unknown given unit but requested in 100 = 1m/s
                 *clearToSend = false;
                 break;
-#endif
             case FSSP_DATAID_HEADING    :
-                smartPortSendPackage(id, attitude.values.yaw * 10); // in degrees * 100 according to SmartPort spec
+                smartPortSendPackage(id, attitude.values.yaw * 10); // given in 10*deg, requested in 10000 = 100 deg
                 *clearToSend = false;
                 break;
 #if defined(USE_ACC)
@@ -867,14 +864,14 @@ void processSmartPortTelemetry(smartPortPayload_t *payload, volatile bool *clear
                 break;
             case FSSP_DATAID_GPS_ALT    :
                 if (STATE(GPS_FIX)) {
-                    smartPortSendPackage(id, gpsSol.llh.altCm); // in cm according to SmartPort spec
+                    smartPortSendPackage(id, gpsSol.llh.altCm); // given in 0.01m
                     *clearToSend = false;
                 }
                 break;
 #endif
             case FSSP_DATAID_A4         :
                 cellCount = getBatteryCellCount();
-                vfasVoltage = cellCount ? (getBatteryVoltage() / cellCount) : 0; // in 0.01V according to SmartPort spec
+                vfasVoltage = cellCount ? (getBatteryVoltage() / cellCount) : 0; // given in 0.01V, convert to volts
                 smartPortSendPackage(id, vfasVoltage);
                 *clearToSend = false;
                 break;

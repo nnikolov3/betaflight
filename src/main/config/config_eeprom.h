@@ -22,8 +22,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include "../pg/pg.h"
 
-#define EEPROM_CONF_VERSION 173
+#define EEPROM_CONF_VERSION 172
 
 bool isEEPROMVersionValid(void);
 bool isEEPROMStructureValid(void);

@@ -23,8 +23,6 @@
 
 #include "platform.h"
 
-#ifdef USE_ACC_ADXL345
-
 #include "drivers/bus_i2c.h"
 
 #include "drivers/sensor.h"
@@ -136,4 +134,3 @@ bool adxl345Detect(drv_adxl345_config_t *init, accDev_t *acc)
     acc->readFn = adxl345Read;
     return true;
 }
-#endif

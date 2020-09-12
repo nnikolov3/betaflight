@@ -137,7 +137,6 @@
 #define OSD_STICK_OVERLAY_VERTICAL_POSITIONS (OSD_STICK_OVERLAY_HEIGHT * OSD_STICK_OVERLAY_SPRITE_HEIGHT)
 
 #define FULL_CIRCLE 360
-#define EFFICIENCY_MINIMUM_SPEED_CM_S 100
 
 #ifdef USE_OSD_STICK_OVERLAY
 typedef struct radioControls_s {
@@ -842,7 +841,7 @@ static void osdElementFlymode(osdElementParms_t *element)
     } else if (FLIGHT_MODE(HEADFREE_MODE)) {
         strcpy(element->buff, "HEAD");
     } else if (FLIGHT_MODE(ANGLE_MODE)) {
-        strcpy(element->buff, "ANGL");
+        strcpy(element->buff, "STAB");
     } else if (FLIGHT_MODE(HORIZON_MODE)) {
         strcpy(element->buff, "HOR ");
     } else if (IS_RC_MODE_ACTIVE(BOXACROTRAINER)) {
@@ -926,6 +925,7 @@ static void osdElementGpsSpeed(osdElementParms_t *element)
 {
     tfp_sprintf(element->buff, "%c%3d%c", SYM_SPEED, osdGetSpeedToSelectedUnit(gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.groundSpeed), osdGetSpeedToSelectedUnitSymbol());
 }
+<<<<<<< HEAD
 
 static void osdElementEfficiency(osdElementParms_t *element)
 {
@@ -946,6 +946,8 @@ static void osdElementEfficiency(osdElementParms_t *element)
         tfp_sprintf(element->buff, "----%c/%c", SYM_MAH, unitSymbol);
     }
 }
+=======
+>>>>>>> 88a5996bb... added riscv
 #endif // USE_GPS
 
 static void osdBackgroundHorizonSidebars(osdElementParms_t *element)
@@ -1017,7 +1019,7 @@ static void osdElementMainBatteryUsage(osdElementParms_t *element)
     const float value = constrain(batteryConfig()->batteryCapacity - getMAhDrawn(), 0, batteryConfig()->batteryCapacity);
 
     // Calculate mAh used progress
-    const uint8_t mAhUsedProgress = (batteryConfig()->batteryCapacity) ? ceilf((value / (batteryConfig()->batteryCapacity / MAIN_BATT_USAGE_STEPS))) : 0;
+    const uint8_t mAhUsedProgress = ceilf((value / (batteryConfig()->batteryCapacity / MAIN_BATT_USAGE_STEPS)));
 
     // Create empty battery indicator bar
     element->buff[0] = SYM_PB_START;
@@ -1040,7 +1042,7 @@ static void osdElementMainBatteryVoltage(osdElementParms_t *element)
         batteryVoltage = (batteryVoltage + 5) / 10;
         tfp_sprintf(element->buff + 1, "%d.%d%c", batteryVoltage / 10, batteryVoltage % 10, SYM_VOLT);
     } else {
-        tfp_sprintf(element->buff + 1, "%d.%02d%c", batteryVoltage / 100, batteryVoltage % 100, SYM_VOLT);
+        tfp_sprintf(element->buff + 1, "%d.%d%c", batteryVoltage / 100, batteryVoltage % 100, SYM_VOLT);
     }
 }
 
@@ -1166,7 +1168,7 @@ static void osdElementRtcTime(osdElementParms_t *element)
 #ifdef USE_RX_RSSI_DBM
 static void osdElementRssiDbm(osdElementParms_t *element)
 {
-    tfp_sprintf(element->buff, "%c%3d", SYM_RSSI, getRssiDbm());
+    tfp_sprintf(element->buff, "%c%3d", SYM_RSSI, getRssiDbm() * -1);
 }
 #endif // USE_RX_RSSI_DBM
 
@@ -1373,7 +1375,7 @@ static void osdElementWarnings(osdElementParms_t *element)
     }
 #ifdef USE_RX_RSSI_DBM
     // rssi dbm
-    if (osdWarnGetState(OSD_WARNING_RSSI_DBM) && (getRssiDbm() < osdConfig()->rssi_dbm_alarm)) {
+    if (osdWarnGetState(OSD_WARNING_RSSI_DBM) && (getRssiDbm() > osdConfig()->rssi_dbm_alarm)) {
         tfp_sprintf(element->buff, "RSSI DBM");
         element->attr = DISPLAYPORT_ATTR_WARNING;
         SET_BLINK(OSD_WARNINGS);
@@ -1721,9 +1723,6 @@ const osdElementDrawFn osdElementDrawFunction[OSD_ITEM_COUNT] = {
     [OSD_RSSI_DBM_VALUE]          = osdElementRssiDbm,
 #endif
     [OSD_RC_CHANNELS]             = osdElementRcChannels,
-#ifdef USE_GPS
-    [OSD_EFFICIENCY]              = osdElementEfficiency,
-#endif
 };
 
 // Define the mapping between the OSD element id and the function to draw its background (static part)
@@ -1774,7 +1773,6 @@ void osdAddActiveElements(void)
         osdAddActiveElement(OSD_HOME_DIST);
         osdAddActiveElement(OSD_HOME_DIR);
         osdAddActiveElement(OSD_FLIGHT_DIST);
-        osdAddActiveElement(OSD_EFFICIENCY);
     }
 #endif // GPS
 #ifdef USE_ESC_SENSOR

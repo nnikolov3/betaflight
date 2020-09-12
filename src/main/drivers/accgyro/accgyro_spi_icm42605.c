@@ -28,8 +28,6 @@
 
 #include "platform.h"
 
-#ifdef USE_GYRO_SPI_ICM42605
-
 #include "common/axis.h"
 #include "common/maths.h"
 #include "build/debug.h"
@@ -278,8 +276,8 @@ bool icm42605SpiGyroDetect(gyroDev_t *gyro)
     gyro->initFn = icm42605GyroInit;
     gyro->readFn = icm42605GyroReadSPI;
 
-    gyro->scale = GYRO_SCALE_2000DPS;
+    // 16.4 dps/lsb scalefactor
+    gyro->scale = 1.0f / 16.4f;
 
     return true;
 }
-#endif

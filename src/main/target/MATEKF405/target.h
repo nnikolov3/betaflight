@@ -39,7 +39,9 @@
 #define SPI1_SCK_PIN            PA5
 #define SPI1_MISO_PIN           PA6
 #define SPI1_MOSI_PIN           PA7
-
+else ifeq ($(TARGET),$(filter $(TARGET), $(SITL_TARGETS)))
+TARGET_MCU := SITL
+SIMULATOR_BUILD = yes
 #define GYRO_1_CS_PIN           PC2
 #define GYRO_1_SPI_INSTANCE     SPI1
 
@@ -74,8 +76,8 @@
 #define USE_I2C_DEVICE_3
 
 #define I2C_DEVICE              (I2CDEV_3)
-#define I2C3_SCL                PA8        // S4 pad
-#define I2C3_SDA                PC9        // S6 pad
+#define I2C3_SCL                PC9        // S4 pad
+#define I2C3_SDA                PA8        // S6 pad
 #define BARO_I2C_INSTANCE       (I2CDEV_3)
 #else
 #define USE_I2C_DEVICE_1

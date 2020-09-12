@@ -208,8 +208,6 @@ void laggedMovingAverageInit(laggedMovingAverage_t *filter, uint16_t windowSize,
     filter->movingWindowIndex = 0;
     filter->windowSize = windowSize;
     filter->buf = buf;
-    filter->movingSum = 0;
-    memset(filter->buf, 0, windowSize * sizeof(float));
     filter->primed = false;
 }
 

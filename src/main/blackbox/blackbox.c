@@ -42,13 +42,17 @@
 #include "common/time.h"
 #include "common/utils.h"
 
-#include "config/config.h"
 #include "config/feature.h"
+#include "pg/pg.h"
+#include "pg/pg_ids.h"
+#include "pg/motor.h"
+#include "pg/rx.h"
 
 #include "drivers/compass/compass.h"
 #include "drivers/sensor.h"
 #include "drivers/time.h"
 
+#include "config/config.h"
 #include "fc/board_info.h"
 #include "fc/controlrate_profile.h"
 #include "fc/rc.h"
@@ -65,11 +69,6 @@
 #include "io/beeper.h"
 #include "io/gps.h"
 #include "io/serial.h"
-
-#include "pg/pg.h"
-#include "pg/pg_ids.h"
-#include "pg/motor.h"
-#include "pg/rx.h"
 
 #include "rx/rx.h"
 
@@ -91,7 +90,7 @@
 PG_REGISTER_WITH_RESET_TEMPLATE(blackboxConfig_t, blackboxConfig, PG_BLACKBOX_CONFIG, 2);
 
 PG_RESET_TEMPLATE(blackboxConfig_t, blackboxConfig,
-    .sample_rate = BLACKBOX_RATE_QUARTER,
+    .p_ratio = 32,
     .device = DEFAULT_BLACKBOX_DEVICE,
     .fields_disabled_mask = 0, // default log all fields
     .mode = BLACKBOX_MODE_NORMAL
@@ -285,7 +284,6 @@ typedef enum BlackboxState {
     BLACKBOX_STATE_SEND_GPS_G_HEADER,
     BLACKBOX_STATE_SEND_SLOW_HEADER,
     BLACKBOX_STATE_SEND_SYSINFO,
-    BLACKBOX_STATE_CACHE_FLUSH,
     BLACKBOX_STATE_PAUSED,
     BLACKBOX_STATE_RUNNING,
     BLACKBOX_STATE_SHUTTING_DOWN,
@@ -374,7 +372,7 @@ static uint16_t blackboxIFrameIndex;
 // typically 32 for 1kHz loop, 64 for 2kHz loop etc
 STATIC_UNIT_TESTED int16_t blackboxIInterval = 0;
 // number of flight loop iterations before logging P-frame
-STATIC_UNIT_TESTED int8_t blackboxPInterval = 0;
+STATIC_UNIT_TESTED int16_t blackboxPInterval = 0;
 STATIC_UNIT_TESTED int32_t blackboxSInterval = 0;
 STATIC_UNIT_TESTED int32_t blackboxSlowFrameIterationTimer;
 static bool blackboxLoggedAnyFrames;
@@ -407,7 +405,7 @@ bool blackboxMayEditConfig(void)
 
 static bool blackboxIsOnlyLoggingIntraframes(void)
 {
-    return blackboxPInterval == 0;
+    return blackboxConfig()->p_ratio == 0;
 }
 
 static bool isFieldEnabled(FlightLogFieldSelect_e field)
@@ -479,7 +477,7 @@ static bool testBlackboxConditionUncached(FlightLogFieldCondition condition)
         return isRssiConfigured() && isFieldEnabled(FIELD_SELECT(RSSI));
 
     case FLIGHT_LOG_FIELD_CONDITION_NOT_LOGGING_EVERY_FRAME:
-        return blackboxPInterval != blackboxIInterval;
+        return blackboxConfig()->p_ratio != 1;
 
     case CONDITION(GYRO):
         return isFieldEnabled(FIELD_SELECT(GYRO));
@@ -1288,7 +1286,7 @@ static bool blackboxWriteSysinfo(void)
         BLACKBOX_PRINT_HEADER_LINE("Craft name", "%s",                      pilotConfig()->name);
         BLACKBOX_PRINT_HEADER_LINE("I interval", "%d",                      blackboxIInterval);
         BLACKBOX_PRINT_HEADER_LINE("P interval", "%d",                      blackboxPInterval);
-        BLACKBOX_PRINT_HEADER_LINE("P ratio", "%d",                         (uint16_t)(blackboxIInterval / blackboxPInterval));
+        BLACKBOX_PRINT_HEADER_LINE("P ratio", "%d",                         blackboxConfig()->p_ratio);
         BLACKBOX_PRINT_HEADER_LINE("minthrottle", "%d",                     motorConfig()->minthrottle);
         BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     motorConfig()->maxthrottle);
         BLACKBOX_PRINT_HEADER_LINE("gyro_scale","0x%x",                     castFloatBytesToInt(1.0f));
@@ -1467,7 +1465,7 @@ static bool blackboxWriteSysinfo(void)
                                                                             rcSmoothingData->derivativeCutoffFrequency);
         BLACKBOX_PRINT_HEADER_LINE("rc_smoothing_rx_average", "%d",         rcSmoothingData->averageFrameTimeUs);
 #endif // USE_RC_SMOOTHING_FILTER
-        BLACKBOX_PRINT_HEADER_LINE("rates_type", "%d",                      currentControlRateProfile->rates_type);
+
 
         BLACKBOX_PRINT_HEADER_LINE("fields_disabled_mask", "%d",            blackboxConfig()->fields_disabled_mask);
 
@@ -1559,7 +1557,7 @@ static void blackboxCheckAndLogFlightMode(void)
 
 STATIC_UNIT_TESTED bool blackboxShouldLogPFrame(void)
 {
-    return blackboxPFrameIndex == 0 && blackboxPInterval != 0;
+    return blackboxPFrameIndex == 0 && blackboxConfig()->p_ratio != 0;
 }
 
 STATIC_UNIT_TESTED bool blackboxShouldLogIFrame(void)
@@ -1653,8 +1651,6 @@ STATIC_UNIT_TESTED void blackboxLogIteration(timeUs_t currentTimeUs)
  */
 void blackboxUpdate(timeUs_t currentTimeUs)
 {
-    static BlackboxState cacheFlushNextState;
-
     switch (blackboxState) {
     case BLACKBOX_STATE_STOPPED:
         if (ARMING_FLAG(ARMED)) {
@@ -1728,8 +1724,7 @@ void blackboxUpdate(timeUs_t currentTimeUs)
         //On entry of this state, xmitState.headerIndex is 0 and xmitState.u.fieldIndex is -1
         if (!sendFieldDefinition('S', 0, blackboxSlowFields, blackboxSlowFields + 1, ARRAYLEN(blackboxSlowFields),
                 NULL, NULL)) {
-            cacheFlushNextState = BLACKBOX_STATE_SEND_SYSINFO;
-            blackboxSetState(BLACKBOX_STATE_CACHE_FLUSH);
+            blackboxSetState(BLACKBOX_STATE_SEND_SYSINFO);
         }
         break;
     case BLACKBOX_STATE_SEND_SYSINFO:
@@ -1743,14 +1738,9 @@ void blackboxUpdate(timeUs_t currentTimeUs)
              * (overflowing circular buffers causes all data to be discarded, so the first few logged iterations
              * could wipe out the end of the header if we weren't careful)
              */
-            cacheFlushNextState = BLACKBOX_STATE_RUNNING;
-            blackboxSetState(BLACKBOX_STATE_CACHE_FLUSH);
-        }
-        break;
-    case BLACKBOX_STATE_CACHE_FLUSH:
-        // Flush the cache and wait until all possible entries have been written to the media
-        if (blackboxDeviceFlushForceComplete()) {
-            blackboxSetState(cacheFlushNextState);
+            if (blackboxDeviceFlushForce()) {
+                blackboxSetState(BLACKBOX_STATE_RUNNING);
+            }
         }
         break;
     case BLACKBOX_STATE_PAUSED:
@@ -1870,14 +1860,6 @@ uint8_t blackboxGetRateDenom(void)
 
 }
 
-uint16_t blackboxGetPRatio(void) {
-    return blackboxIInterval / blackboxPInterval;
-}
-
-uint8_t blackboxCalculateSampleRate(uint16_t pRatio) {
-    return LOG2(32000 / (targetPidLooptime * pRatio));
-}
-
 /**
  * Call during system startup to initialize the blackbox.
  */
@@ -1890,11 +1872,15 @@ void blackboxInit(void)
     // targetPidLooptime is 1000 for 1kHz loop, 500 for 2kHz loop etc, targetPidLooptime is rounded for short looptimes
     blackboxIInterval = (uint16_t)(32 * 1000 / targetPidLooptime);
 
-    blackboxPInterval = 1 << blackboxConfig()->sample_rate;
-    if (blackboxPInterval > blackboxIInterval) {
-        blackboxPInterval = 0; // log only I frames if logging frequency is too low
+    // by default p_ratio is 32 and a P-frame is written every 1ms
+    // if p_ratio is zero then no P-frames are logged
+    if (blackboxConfig()->p_ratio == 0) {
+        blackboxPInterval = 0; // blackboxPInterval not used when p_ratio is zero, so just set it to zero
+    } else if (blackboxConfig()->p_ratio > blackboxIInterval && blackboxIInterval >= 32) {
+        blackboxPInterval = 1;
+    } else {
+        blackboxPInterval = blackboxIInterval /  blackboxConfig()->p_ratio;
     }
-
     if (blackboxConfig()->device) {
         blackboxSetState(BLACKBOX_STATE_STOPPED);
     } else {

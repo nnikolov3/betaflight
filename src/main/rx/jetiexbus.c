@@ -210,6 +210,7 @@ static void jetiExBusDataReceive(uint16_t c, void *data)
         if (jetiExBusFrameState == EXBUS_STATE_IN_PROGRESS)
             jetiExBusFrameState = EXBUS_STATE_RECEIVED;
         if (jetiExBusRequestState == EXBUS_STATE_IN_PROGRESS) {
+            lastRcFrameTimeUs = now;
             jetiExBusRequestState = EXBUS_STATE_RECEIVED;
             jetiTimeStampRequest = now;
         }
@@ -229,7 +230,8 @@ static uint8_t jetiExBusFrameStatus(rxRuntimeState_t *rxRuntimeState)
         if (jetiExBusCalcCRC16(jetiExBusChannelFrame, jetiExBusChannelFrame[EXBUS_HEADER_MSG_LEN]) == 0) {
             jetiExBusDecodeChannelFrame(jetiExBusChannelFrame);
             frameStatus = RX_FRAME_COMPLETE;
-            lastRcFrameTimeUs = jetiTimeStampRequest;
+        } else {
+            lastRcFrameTimeUs = 0;  // We received a frame but it wasn't valid new channel data
         }
         jetiExBusFrameState = EXBUS_STATE_ZERO;
     }
@@ -245,9 +247,11 @@ static uint16_t jetiExBusReadRawRC(const rxRuntimeState_t *rxRuntimeState, uint8
     return (jetiExBusChannelData[chan]);
 }
 
-static timeUs_t jetiExBusFrameTimeUsFn(void)
+static timeUs_t jetiExBusFrameTimeUs(void)
 {
-    return lastRcFrameTimeUs;
+    const timeUs_t result = lastRcFrameTimeUs;
+    lastRcFrameTimeUs = 0;
+    return result;
 }
 
 bool jetiExBusInit(const rxConfig_t *rxConfig, rxRuntimeState_t *rxRuntimeState)
@@ -259,7 +263,7 @@ bool jetiExBusInit(const rxConfig_t *rxConfig, rxRuntimeState_t *rxRuntimeState)
 
     rxRuntimeState->rcReadRawFn = jetiExBusReadRawRC;
     rxRuntimeState->rcFrameStatusFn = jetiExBusFrameStatus;
-    rxRuntimeState->rcFrameTimeUsFn = jetiExBusFrameTimeUsFn;
+    rxRuntimeState->rcFrameTimeUsFn = jetiExBusFrameTimeUs;
 
     jetiExBusFrameReset();
 

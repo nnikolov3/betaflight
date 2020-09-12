@@ -103,7 +103,7 @@ typedef union sbusFrame_u {
 
 typedef struct sbusFrameData_s {
     sbusFrame_t frame;
-    timeUs_t startAtUs;
+    uint32_t startAtUs;
     uint8_t position;
     bool done;
 } sbusFrameData_t;
@@ -135,6 +135,7 @@ static void sbusDataReceive(uint16_t c, void *data)
         if (sbusFrameData->position < SBUS_FRAME_SIZE) {
             sbusFrameData->done = false;
         } else {
+            lastRcFrameTimeUs = nowUs;
             sbusFrameData->done = true;
             DEBUG_SET(DEBUG_SBUS, DEBUG_SBUS_FRAME_TIME, sbusFrameTime);
         }
@@ -153,16 +154,17 @@ static uint8_t sbusFrameStatus(rxRuntimeState_t *rxRuntimeState)
 
     const uint8_t frameStatus = sbusChannelsDecode(rxRuntimeState, &sbusFrameData->frame.frame.channels);
 
-    if (!(frameStatus & (RX_FRAME_FAILSAFE | RX_FRAME_DROPPED))) {
-        lastRcFrameTimeUs = sbusFrameData->startAtUs;
+    if (frameStatus != RX_FRAME_COMPLETE) {
+        lastRcFrameTimeUs = 0;  // We received a frame but it wasn't valid new channel data
     }
-
     return frameStatus;
 }
 
 static timeUs_t sbusFrameTimeUs(void)
 {
-    return lastRcFrameTimeUs;
+    const timeUs_t result = lastRcFrameTimeUs;
+    lastRcFrameTimeUs = 0;
+    return result;
 }
 
 bool sbusInit(const rxConfig_t *rxConfig, rxRuntimeState_t *rxRuntimeState)

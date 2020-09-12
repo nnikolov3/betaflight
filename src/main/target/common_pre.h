@@ -114,8 +114,6 @@
 #define USE_DSHOT_TELEMETRY_STATS
 #define USE_RPM_FILTER
 #define USE_DYN_IDLE
-#define I2C3_OVERCLOCK true
-#define I2C4_OVERCLOCK true
 #define USE_GYRO_DATA_ANALYSE
 #define USE_ADC_INTERNAL
 #define USE_USB_CDC_HID
@@ -366,7 +364,10 @@
 #define USE_PROFILE_NAMES
 #define USE_SERIALRX_SRXL2     // Spektrum SRXL2 protocol
 #define USE_INTERPOLATED_SP
+<<<<<<< HEAD
 #define USE_CUSTOM_BOX_NAMES
 #define USE_BATTERY_VOLTAGE_SAG_COMPENSATION
 #define USE_RX_MSP_OVERRIDE
+=======
+>>>>>>> 88a5996bb... added riscv
 #endif

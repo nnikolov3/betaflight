@@ -646,7 +646,7 @@ rxRuntimeState_t rxRuntimeState;
 PG_REGISTER(blackboxConfig_t, blackboxConfig, PG_BLACKBOX_CONFIG, 0);
 PG_REGISTER(systemConfig_t, systemConfig, PG_SYSTEM_CONFIG, 2);
 void resetArmingDisabled(void) {}
-timeDelta_t getTaskDeltaTimeUs(taskId_e) { return 20000; }
+timeDelta_t getTaskDeltaTime(cfTaskId_e) { return 20000; }
 armingDisableFlags_e getArmingDisableFlags(void) {
     return (armingDisableFlags_e) 0;
 }
@@ -655,5 +655,4 @@ void resetTryingToArm(void) {}
 void setLedProfile(uint8_t profile) { UNUSED(profile); }
 uint8_t getLedProfile(void) { return 0; }
 void compassStartCalibration(void) {}
-void pinioBoxTaskControl(void) {}
 }

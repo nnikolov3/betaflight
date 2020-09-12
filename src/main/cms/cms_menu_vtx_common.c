@@ -43,10 +43,8 @@
 static char statusLine1[MAX_STATUS_LINE_LENGTH] = "";
 static char statusLine2[MAX_STATUS_LINE_LENGTH] = "";
 
-static const void *setStatusMessage(displayPort_t *pDisp)
+static const void *setStatusMessage(void)
 {
-    UNUSED(pDisp);
-
     vtxDevice_t *device = vtxCommonDevice();
 
     statusLine1[0] = 0;

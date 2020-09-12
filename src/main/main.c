@@ -20,31 +20,60 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "riscv_k210_fpioa.h"
+#include "riscv_k210_gpio.h"
 
 #include "platform.h"
 
 #include "fc/init.h"
-
-#include "scheduler/scheduler.h"
+//#include "scheduler/scheduler.h"
 
 void run(void);
 
+/**** capstone - for demo ****/
+#include "drivers/flash_riscv_k210.h"
+#define MY_ADDR 0x80200000
+/**** capstone - end of demo ****/
+
 int main(void)
 {
-    init();
+	// this is temp..to allow minicom to boot up
+	init();
 
-    run();
+	/**** capstone - for demo ****/
+	// for demo purpose - erase flash every other board reset
+	// need to erase previous config or else it
+	// will read it again so you won't see it write again --- for dev
+	uint32_t my_index = 0x1;
+	uint8_t my_data_buf[0];
+	flash_read_data(MY_ADDR, &my_data_buf[0], 1, FLASH_STANDARD);
+	if ((int)my_data_buf[0] == 1) {
+		my_index = 0x2;
+		my_data_buf[0] = (uint8_t)(my_index);
+		flash_write_data(MY_ADDR, (uint8_t *)my_data_buf, 8);
+		flash_sector_erase(FLASH_START_ADDR);
+	} else {
+		my_index = 0x1;
+		my_data_buf[0] = (uint8_t)(my_index);
+		flash_write_data(MY_ADDR, (uint8_t *)my_data_buf, 8);
+	}
+	printf("Board Initialized: OK\n\n");
+	/**** capstone - end of demo ****/
+	blink();
+	//run();
 
-    return 0;
+	return 0;
 }
-
-void FAST_CODE FAST_CODE_NOINLINE run(void)
-{
-    while (true) {
-        scheduler();
-        processLoopback();
+/*
+   void FAST_CODE FAST_CODE_NOINLINE run(void) {
+   while (true) {
+   scheduler();
+   processLoopback();
 #ifdef SIMULATOR_BUILD
-        delayMicroseconds_real(50); // max rate 20kHz
+delayMicroseconds_real(50); // max rate 20kHz
 #endif
-    }
 }
+}
+*/

@@ -166,6 +166,7 @@ static bool writeFontCharacter(displayPort_t *displayPort, uint16_t addr, const 
 
 static bool checkReady(displayPort_t *displayPort, bool rescan)
 {
+<<<<<<< HEAD
     UNUSED(displayPort);
     if (!max7456IsDeviceDetected()) {
         if (!rescan) {
@@ -184,6 +185,11 @@ static bool checkReady(displayPort_t *displayPort, bool rescan)
     displayPort->cols = 30 + displayPortProfileMax7456()->colAdjust;
 
     return true;
+=======
+    UNUSED(instance);
+
+    return max7456IsDeviceDetected();
+>>>>>>> 88a5996bb... added riscv
 }
 
 static const displayPortVTable_t max7456VTable = {
@@ -208,6 +214,7 @@ static const displayPortVTable_t max7456VTable = {
 
 bool max7456DisplayPortInit(const vcdProfile_t *vcdProfile, displayPort_t **displayPort)
 {
+<<<<<<< HEAD
     max7456VcdProfile = vcdProfile;
 
     switch (max7456Init(max7456Config(), max7456VcdProfile, systemConfig()->cpu_overclock)) {
@@ -240,5 +247,17 @@ bool max7456DisplayPortInit(const vcdProfile_t *vcdProfile, displayPort_t **disp
     }
 
     return true;
+=======
+    if (
+        !max7456Init(max7456Config(), vcdProfile, systemConfig()->cpu_overclock)
+    ) {
+        return NULL;
+    }
+
+    displayInit(&max7456DisplayPort, &max7456VTable);
+
+    resync(&max7456DisplayPort);
+    return &max7456DisplayPort;
+>>>>>>> 88a5996bb... added riscv
 }
 #endif // USE_MAX7456

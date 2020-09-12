@@ -24,14 +24,9 @@
 #ifdef USE_INTERPOLATED_SP
 
 #include "build/debug.h"
-
 #include "common/maths.h"
-
 #include "fc/rc.h"
-
-#include "flight/pid.h"
-
-#include "interpolated_setpoint.h"
+#include "flight/interpolated_setpoint.h"
 
 static float setpointDeltaImpl[XYZ_AXIS_COUNT];
 static float setpointDelta[XYZ_AXIS_COUNT];
@@ -70,7 +65,7 @@ FAST_CODE_NOINLINE float interpolatedSpApply(int axis, bool newRcFrame, ffInterp
     if (newRcFrame) {
         float rawSetpoint = getRawSetpoint(axis);
 
-        const float rxInterval = getCurrentRxRefreshRate() * 1e-6f;
+        const float rxInterval = currentRxRefreshRate * 1e-6f;
         const float rxRate = 1.0f / rxInterval;
         float setpointSpeed = (rawSetpoint - prevRawSetpoint[axis]) * rxRate;
         float setpointAcceleration = setpointSpeed - prevSetpointSpeed[axis];

@@ -19,7 +19,7 @@
  */
 
 /*
- * Replacement for system header file <ctype.h> to avoid macro definitions
+ * Replacemnet for system header file <ctype.h> to avoid macro definitions
  * Functions are implemented in common/string_light.c
  */
 

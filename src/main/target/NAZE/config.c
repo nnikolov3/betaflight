@@ -117,7 +117,7 @@ void targetConfiguration(void)
     }
 #endif
 
-#if defined(USE_MAG) && defined(MAG_INT_EXTI)
+#ifdef MAG_INT_EXTI
     if (hardwareRevision < NAZE32_REV5) {
         compassConfigMutable()->interruptTag = IO_TAG(PB12);
     }

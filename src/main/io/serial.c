@@ -93,9 +93,6 @@ const serialPortIdentifier_e serialPortIdentifiers[SERIAL_PORT_COUNT] = {
 #ifdef USE_UART8
     SERIAL_PORT_USART8,
 #endif
-#ifdef USE_UART9
-    SERIAL_PORT_LPUART1,
-#endif
 #ifdef USE_SOFTSERIAL1
     SERIAL_PORT_SOFTSERIAL1,
 #endif
@@ -393,9 +390,6 @@ serialPort_t *openSerialPort(
 #endif
 #ifdef USE_UART8
         case SERIAL_PORT_USART8:
-#endif
-#ifdef USE_UART9
-        case SERIAL_PORT_LPUART1:
 #endif
 #if defined(SIMULATOR_BUILD)
             // emulate serial ports over TCP

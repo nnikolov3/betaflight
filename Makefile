@@ -16,13 +16,13 @@
 #
 
 # The target to build, see VALID_TARGETS below
-TARGET    ?= STM32F405
+TARGET    ?= MAIXBIT
 
 # Compile-time options
 OPTIONS   ?=
 
 # compile for OpenPilot BootLoader support
-OPBL      ?= no
+OPBL      ?= yes
 
 # compile for External Storage Bootloader support
 EXST      ?= no
@@ -64,8 +64,8 @@ BIN_DIR         := $(ROOT)/obj
 CMSIS_DIR       := $(ROOT)/lib/main/CMSIS
 INCLUDE_DIRS    := $(SRC_DIR) \
                    $(ROOT)/src/main/target \
-                   $(ROOT)/src/main/startup
-LINKER_DIR      := $(ROOT)/src/link
+                   $(ROOT)/src/main/startup \
+LINKER_DIR	:= $(ROOT)/src/link
 
 ## V                 : Set verbosity level based on the V= parameter
 ##                     V=0 Low
@@ -95,7 +95,7 @@ export RM := rm
 include $(ROOT)/make/$(OSFAMILY).mk
 
 # include the tools makefile
-include $(ROOT)/make/tools.mk
+# include $(ROOT)/make/tools.mk
 
 # default xtal value for F4 targets
 HSE_VALUE       ?= 8000000
@@ -129,7 +129,6 @@ USBFS_DIR       = $(ROOT)/lib/main/STM32_USB-FS-Device_Driver
 USBPERIPH_SRC   = $(notdir $(wildcard $(USBFS_DIR)/src/*.c))
 FATFS_DIR       = $(ROOT)/lib/main/FatFS
 FATFS_SRC       = $(notdir $(wildcard $(FATFS_DIR)/*.c))
-
 CSOURCES        := $(shell find $(SRC_DIR) -name '*.c')
 
 LD_FLAGS        :=
@@ -230,6 +229,18 @@ OBJDUMP     := $(ARM_SDK_PREFIX)objdump
 SIZE        := $(ARM_SDK_PREFIX)size
 DFUSE-PACK  := src/utils/dfuse-pack.py
 
+
+ifneq ($(TARGET),$(filter $(TARGET),$(MAIXBIT)))
+RISCV64_SDK_PREFIX = /opt/kendryte-toolchain/bin/riscv64-unknown-elf-
+
+CROSS_CC    := $(RISCV64_SDK_PREFIX)gcc #$(CCACHE) $(ARM_SDK_PREFIX)gcc
+CROSS_CXX   := $(RISCV64_SDK_PREFIX)g++  #$(CCACHE) $(ARM_SDK_PREFIX)g++
+CROSS_GDB   := $(RISCV64_SDK_PREFIX)-gdb  #$(ARM_SDK_PREFIX)gdb
+OBJCOPY     := $(RISCV64_SDK_PREFIX)objcopy  #$(ARM_SDK_PREFIX)objcopy
+OBJDUMP     := $(RISCV64_SDK_PREFIX)objdump  #$(ARM_SDK_PREFIX)objdump
+SIZE        := $(RISCV64_SDK_PREFIX)size  #$(ARM_SDK_PREFIX)size
+DFUSE-PACK  := src/utils/dfuse-pack.py
+endif
 #
 # Tool options.
 #
@@ -239,57 +250,57 @@ CC_SPEED_OPTIMISATION   := $(OPTIMISATION_BASE) $(OPTIMISE_SPEED)
 CC_SIZE_OPTIMISATION    := $(OPTIMISATION_BASE) $(OPTIMISE_SIZE)
 CC_NO_OPTIMISATION      := 
 
-#
-# Added after GCC version update, remove once the warnings have been fixed
-#
-TEMPORARY_FLAGS :=
+# #
+# # Added after GCC version update, remove once the warnings have been fixed
+# #
+# TEMPORARY_FLAGS :=
 
-CFLAGS     += $(ARCH_FLAGS) \
-              $(addprefix -D,$(OPTIONS)) \
-              $(addprefix -I,$(INCLUDE_DIRS)) \
-              $(DEBUG_FLAGS) \
-              -std=gnu11 \
-              -Wall -Wextra -Wunsafe-loop-optimizations -Wdouble-promotion \
-              -ffunction-sections \
-              -fdata-sections \
-              -fno-common \
-              -pedantic \
-              $(TEMPORARY_FLAGS) \
-              $(DEVICE_FLAGS) \
-              -D_GNU_SOURCE \
-              -DUSE_STDPERIPH_DRIVER \
-              -D$(TARGET) \
-              $(TARGET_FLAGS) \
-              -D'__FORKNAME__="$(FORKNAME)"' \
-              -D'__TARGET__="$(TARGET)"' \
-              -D'__REVISION__="$(REVISION)"' \
-              -save-temps=obj \
-              -MMD -MP \
-              $(EXTRA_FLAGS)
+# CFLAGS     += $(ARCH_FLAGS) \
+               $(addprefix -D,$(OPTIONS)) \
+               $(addprefix -I,$(INCLUDE_DIRS)) \
+               $(DEBUG_FLAGS) \
+               -std=gnu11 \
+               -Wall -Wextra -Wunsafe-loop-optimizations -Wdouble-promotion \
+               -ffunction-sections \
+               -fdata-sections \
+               -fno-common \
+               -pedantic \
+               $(TEMPORARY_FLAGS) \
+               $(DEVICE_FLAGS) \
+               -D_GNU_SOURCE \
+               -DUSE_STDPERIPH_DRIVER \
+               -D$(TARGET) \
+               $(TARGET_FLAGS) \
+               -D'__FORKNAME__="$(FORKNAME)"' \
+               -D'__TARGET__="$(TARGET)"' \
+               -D'__REVISION__="$(REVISION)"' \
+               -save-temps=obj \
+               -MMD -MP \
+               $(EXTRA_FLAGS)
 
 ASFLAGS     = $(ARCH_FLAGS) \
-              $(DEBUG_FLAGS) \
-              -x assembler-with-cpp \
-              $(addprefix -I,$(INCLUDE_DIRS)) \
-              -MMD -MP
+               $(DEBUG_FLAGS) \
+               -x assembler-with-cpp \
+               $(addprefix -I,$(INCLUDE_DIRS)) \
+               -MMD -MP
 
 ifeq ($(LD_FLAGS),)
 LD_FLAGS     = -lm \
-              -nostartfiles \
-              --specs=nano.specs \
-              -lc \
-              -lnosys \
-              $(ARCH_FLAGS) \
-              $(LTO_FLAGS) \
-              $(DEBUG_FLAGS) \
-              -static \
-              -Wl,-gc-sections,-Map,$(TARGET_MAP) \
-              -Wl,-L$(LINKER_DIR) \
-              -Wl,--cref \
-              -Wl,--no-wchar-size-warning \
-              -Wl,--print-memory-usage \
-              -T$(LD_SCRIPT) \
-               $(EXTRA_LD_FLAGS)
+                  -nostartfiles \
+                  --specs=nano.specs \
+                  -lc \
+                  -lnosys \
+                  $(ARCH_FLAGS) \
+                  $(LTO_FLAGS) \
+                  $(DEBUG_FLAGS) \
+                  -static \
+                  -Wl,-gc-sections,-Map,$(TARGET_MAP) \
+                  -Wl,-L$(LINKER_DIR) \
+                  -Wl,--cref \
+                  -Wl,--no-wchar-size-warning \
+                  -Wl,--print-memory-usage \
+                  -T$(LD_SCRIPT) \
+                   $(EXTRA_LD_FLAGS)
 endif
 
 ###############################################################################
@@ -307,6 +318,7 @@ TARGET_BASENAME = $(BIN_DIR)/$(FORKNAME)_$(FC_VER)_$(TARGET)_$(REVISION)
 #
 # Things we will build
 #
+TARGET_S19      = $(TARGET_BASENAME).s19
 TARGET_BIN      = $(TARGET_BASENAME).bin
 TARGET_HEX      = $(TARGET_BASENAME).hex
 TARGET_DFU      = $(TARGET_BASENAME).dfu
@@ -335,6 +347,11 @@ $(OBJECT_DIR)/$(TARGET)/build/version.o : $(SRC)
 
 $(TARGET_LST): $(TARGET_ELF)
 	$(V0) $(OBJDUMP) -S --disassemble $< > $@
+
+
+$(TARGET_S19): $(TARGET_ELF)
+	@echo "Creating srec/S19 $(TARGET_S19)" "$(STDOUT)"
+	$(V1) $(OBJCOPY) --output-target=srec $(TARGET_S19)
 
 ifeq ($(EXST),no)
 $(TARGET_BIN): $(TARGET_ELF)
@@ -396,7 +413,6 @@ endif
 $(TARGET_ELF): $(TARGET_OBJS) $(LD_SCRIPT)
 	@echo "Linking $(TARGET)" "$(STDOUT)"
 	$(V1) $(CROSS_CC) -o $@ $(filter-out %.ld,$^) $(LD_FLAGS)
-	$(V1) $(SIZE) $(TARGET_ELF)
 
 # Compile
 
@@ -454,7 +470,7 @@ all_all: $(VALID_TARGETS)
 unified: $(UNIFIED_TARGETS)
 
 ## unified_zip : build all Unified Targets as zip files (for posting on GitHub)
-unified_zip: $(addsuffix _clean,$(UNIFIED_TARGETS)) $(addsuffix _zip,$(UNIFIED_TARGETS))
+unified_zip: $(addsuffix _zip,$(UNIFIED_TARGETS))
 
 ## legacy : Build legacy targets
 legacy: $(LEGACY_TARGETS)
@@ -556,6 +572,9 @@ zip:
 
 binary:
 	$(V0) $(MAKE) -j $(TARGET_BIN)
+
+srec:
+	$(V0) $(MAKE) -j $(TARGET_S19)
 
 hex:
 	$(V0) $(MAKE) -j $(TARGET_HEX)
@@ -680,10 +699,6 @@ test junittest test-all test-representative:
 ## test_help         : print the help message for the test suite (including a list of the available tests)
 test_help:
 	$(V0) cd src/test && $(MAKE) help
-
-## test_versions         : print the compiler versions used for the test suite
-test_versions:
-	$(V0) cd src/test && $(MAKE) versions
 
 ## test_%            : run test 'test_%' from the test suite
 test_%:

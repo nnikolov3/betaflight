@@ -160,19 +160,29 @@ static void taskUpdateAccelerometer(timeUs_t currentTimeUs)
 
 static void taskUpdateRxMain(timeUs_t currentTimeUs)
 {
+    static timeUs_t lastRxTimeUs;
+
     if (!processRx(currentTimeUs)) {
         return;
     }
 
-    // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
-    updateRcCommands();
-    updateArmingStatus();
+    timeDelta_t rxFrameDeltaUs;
+    if (!rxGetFrameDelta(&rxFrameDeltaUs)) {
+        rxFrameDeltaUs = cmpTimeUs(currentTimeUs, lastRxTimeUs); // calculate a delta here if not supplied by the protocol
+    }
+    lastRxTimeUs = currentTimeUs;
+    currentRxRefreshRate = constrain(rxFrameDeltaUs, 1000, 30000);
+    isRXDataNew = true;
 
 #ifdef USE_USB_CDC_HID
     if (!ARMING_FLAG(ARMED)) {
         sendRcDataToHid();
     }
 #endif
+
+    // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
+    updateRcCommands();
+    updateArmingStatus();
 }
 
 #ifdef USE_BARO
@@ -186,21 +196,6 @@ static void taskUpdateBaro(timeUs_t currentTimeUs)
             rescheduleTask(TASK_SELF, newDeadline);
         }
     }
-}
-#endif
-
-#if defined(USE_RANGEFINDER)
-void taskUpdateRangefinder(timeUs_t currentTimeUs)
-{
-    UNUSED(currentTimeUs);
-
-    if (!sensors(SENSOR_RANGEFINDER)) {
-        return;
-    }
-
-    rangefinderUpdate();
-
-    rangefinderProcess(getCosTiltAngle());
 }
 #endif
 
@@ -244,14 +239,6 @@ void tasksInit(void)
 
     const bool useBatteryVoltage = batteryConfig()->voltageMeterSource != VOLTAGE_METER_NONE;
     setTaskEnabled(TASK_BATTERY_VOLTAGE, useBatteryVoltage);
-
-#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
-    // If vbat motor output compensation is used, use fast vbat samplingTime
-    if (isSagCompensationConfigured()) {
-        rescheduleTask(TASK_BATTERY_VOLTAGE, TASK_PERIOD_HZ(FAST_VOLTAGE_TASK_FREQ_HZ));
-    }
-#endif
-
     const bool useBatteryCurrent = batteryConfig()->currentMeterSource != CURRENT_METER_NONE;
     setTaskEnabled(TASK_BATTERY_CURRENT, useBatteryCurrent);
     const bool useBatteryAlerts = batteryConfig()->useVBatAlerts || batteryConfig()->useConsumptionAlerts || featureIsEnabled(FEATURE_OSD);
@@ -351,7 +338,7 @@ void tasksInit(void)
 #endif
 
 #ifdef USE_PINIOBOX
-    pinioBoxTaskControl();
+    setTaskEnabled(TASK_PINIOBOX, true);
 #endif
 
 #ifdef USE_CMS
@@ -383,25 +370,25 @@ void tasksInit(void)
     .subTaskName = subTaskNameParam, \
     .checkFunc = checkFuncParam, \
     .taskFunc = taskFuncParam, \
-    .desiredPeriodUs = desiredPeriodParam, \
+    .desiredPeriod = desiredPeriodParam, \
     .staticPriority = staticPriorityParam \
 }
 #else
 #define DEFINE_TASK(taskNameParam, subTaskNameParam, checkFuncParam, taskFuncParam, desiredPeriodParam, staticPriorityParam) {  \
     .checkFunc = checkFuncParam, \
     .taskFunc = taskFuncParam, \
-    .desiredPeriodUs = desiredPeriodParam, \
+    .desiredPeriod = desiredPeriodParam, \
     .staticPriority = staticPriorityParam \
 }
 #endif
 
 
-task_t tasks[TASK_COUNT] = {
+cfTask_t cfTasks[TASK_COUNT] = {
     [TASK_SYSTEM] = DEFINE_TASK("SYSTEM", "LOAD", NULL, taskSystemLoad, TASK_PERIOD_HZ(10), TASK_PRIORITY_MEDIUM_HIGH),
     [TASK_MAIN] = DEFINE_TASK("SYSTEM", "UPDATE", NULL, taskMain, TASK_PERIOD_HZ(1000), TASK_PRIORITY_MEDIUM_HIGH),
     [TASK_SERIAL] = DEFINE_TASK("SERIAL", NULL, NULL, taskHandleSerial, TASK_PERIOD_HZ(100), TASK_PRIORITY_LOW), // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
     [TASK_BATTERY_ALERTS] = DEFINE_TASK("BATTERY_ALERTS", NULL, NULL, taskBatteryAlerts, TASK_PERIOD_HZ(5), TASK_PRIORITY_MEDIUM),
-    [TASK_BATTERY_VOLTAGE] = DEFINE_TASK("BATTERY_VOLTAGE", NULL, NULL, batteryUpdateVoltage, TASK_PERIOD_HZ(SLOW_VOLTAGE_TASK_FREQ_HZ), TASK_PRIORITY_MEDIUM), // Freq may be updated in tasksInit
+    [TASK_BATTERY_VOLTAGE] = DEFINE_TASK("BATTERY_VOLTAGE", NULL, NULL, batteryUpdateVoltage, TASK_PERIOD_HZ(50), TASK_PRIORITY_MEDIUM),
     [TASK_BATTERY_CURRENT] = DEFINE_TASK("BATTERY_CURRENT", NULL, NULL, batteryUpdateCurrentMeter, TASK_PERIOD_HZ(50), TASK_PRIORITY_MEDIUM),
 
 #ifdef USE_TRANSPONDER
@@ -467,7 +454,7 @@ task_t tasks[TASK_COUNT] = {
 #endif
 
 #ifdef USE_CMS
-    [TASK_CMS] = DEFINE_TASK("CMS", NULL, NULL, cmsHandler, TASK_PERIOD_HZ(20), TASK_PRIORITY_LOW),
+    [TASK_CMS] = DEFINE_TASK("CMS", NULL, NULL, cmsHandler, TASK_PERIOD_HZ(60), TASK_PRIORITY_LOW),
 #endif
 
 #ifdef USE_VTX_CONTROL
@@ -491,11 +478,6 @@ task_t tasks[TASK_COUNT] = {
 #endif
 
 #ifdef USE_RANGEFINDER
-    [TASK_RANGEFINDER] = DEFINE_TASK("RANGEFINDER", NULL, NULL, taskUpdateRangefinder, TASK_PERIOD_HZ(10), TASK_PRIORITY_IDLE),
+    [TASK_RANGEFINDER] = DEFINE_TASK("RANGEFINDER", NULL, NULL, rangefinderUpdate, TASK_PERIOD_HZ(10), TASK_PRIORITY_IDLE),
 #endif
 };
-
-task_t *getTask(unsigned taskId)
-{
-    return &tasks[taskId];
-}

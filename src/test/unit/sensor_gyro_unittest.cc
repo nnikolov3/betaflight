@@ -37,7 +37,6 @@ extern "C" {
     #include "pg/pg_ids.h"
     #include "scheduler/scheduler.h"
     #include "sensors/gyro.h"
-    #include "sensors/gyro_init.h"
     #include "sensors/acceleration.h"
     #include "sensors/sensors.h"
 
@@ -160,7 +159,6 @@ void beeper(beeperMode_e) {}
 uint8_t detectedSensors[] = { GYRO_NONE, ACC_NONE };
 timeDelta_t getGyroUpdateRate(void) {return gyro.targetLooptime;}
 void sensorsSet(uint32_t) {}
-void schedulerResetTaskStatistics(taskId_e) {}
+void schedulerResetTaskStatistics(cfTaskId_e) {}
 int getArmingDisableFlags(void) {return 0;}
-void writeEEPROM(void) {}
 }

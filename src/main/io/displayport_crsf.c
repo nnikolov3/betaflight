@@ -50,7 +50,7 @@ static int crsfClearScreen(displayPort_t *displayPort)
 {
     UNUSED(displayPort);
     memset(crsfScreen.buffer, ' ', sizeof(crsfScreen.buffer));
-    crsfScreen.updated = false;
+    memset(crsfScreen.pendingTransport, 0, sizeof(crsfScreen.pendingTransport));
     crsfScreen.reset = true;
     delayTransportUntilMs = millis() + CRSF_DISPLAY_PORT_CLEAR_DELAY_MS;
     return 0;
@@ -83,8 +83,8 @@ static int crsfWriteString(displayPort_t *displayPort, uint8_t col, uint8_t row,
     }
     const size_t truncLen = MIN((int)strlen(s), crsfScreen.cols-col);  // truncate at colCount
     char *rowStart = &crsfScreen.buffer[row * crsfScreen.cols + col];
-    crsfScreen.updated |= memcmp(rowStart, s, truncLen);
-    if (crsfScreen.updated) {
+    crsfScreen.pendingTransport[row] = memcmp(rowStart, s, truncLen);
+    if (crsfScreen.pendingTransport[row]) {
         memcpy(rowStart, s, truncLen);
     }
     return 0;
@@ -183,17 +183,29 @@ void crsfDisplayPortRefresh(void)
         crsfDisplayPortMenuOpen();
         return;
     }
-    crsfScreen.updated = true;
+    memset(crsfScreen.pendingTransport, 1, crsfScreen.rows);
     crsfScreen.reset = true;
     delayTransportUntilMs = millis() + CRSF_DISPLAY_PORT_CLEAR_DELAY_MS;
 }
 
-bool crsfDisplayPortIsReady(void)
+int crsfDisplayPortNextRow(void)
 {
     const timeMs_t currentTimeMs = millis();
+<<<<<<< HEAD
     const bool delayExpired = (currentTimeMs > delayTransportUntilMs);
     const bool cmsReady = (cmsInMenu && (pCurrentDisplay == &crsfDisplayPort));
     return (bool)(delayExpired && cmsReady);
+=======
+    if (currentTimeMs < delayTransportUntilMs) {
+        return -1;
+    }
+    for(unsigned int i=0; i<CRSF_DISPLAY_PORT_ROWS_MAX; i++) {
+        if (crsfScreen.pendingTransport[i]) {
+            return i;
+        }
+    }
+    return -1;
+>>>>>>> 88a5996bb... added riscv
 }
 
 displayPort_t *displayPortCrsfInit()

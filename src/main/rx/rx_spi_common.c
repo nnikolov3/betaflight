@@ -94,18 +94,19 @@ void rxSpiLedBlink(timeMs_t blinkMs)
 
 void rxSpiLedBlinkRxLoss(rx_spi_received_e result)
 {
-    static timeMs_t rxLossMs = 0;
+    static uint16_t rxLossCount = 0;
 
     if (ledPin) {
         if (result == RX_SPI_RECEIVED_DATA) {
+            rxLossCount = 0;
             rxSpiLedOn();
         } else {
-            if ((rxLossMs + INTERVAL_RX_LOSS_MS) > millis()) {
-                return;
+            if (rxLossCount  < RX_LOSS_COUNT) {
+                rxLossCount++;
+            } else {
+                rxSpiLedBlink(INTERVAL_RX_LOSS_MS);
             }
-            rxSpiLedToggle();
         }
-        rxLossMs = millis();
     }
 }
 

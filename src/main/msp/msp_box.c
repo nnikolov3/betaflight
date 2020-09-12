@@ -34,7 +34,6 @@
 #include "fc/runtime_config.h"
 
 #include "flight/mixer.h"
-#include "flight/pid.h"
 
 #include "sensors/sensors.h"
 
@@ -126,29 +125,14 @@ const box_t *findBoxByPermanentId(uint8_t permanentId)
 
 static bool activeBoxIdGet(boxId_e boxId)
 {
-    if (boxId > sizeof(activeBoxIds) * 8) {
+    if (boxId > sizeof(activeBoxIds) * 8)
         return false;
-    }
-
     return bitArrayGet(&activeBoxIds, boxId);
 }
 
 void serializeBoxNameFn(sbuf_t *dst, const box_t *box)
 {
-#if defined(USE_CUSTOM_BOX_NAMES)
-    if (box->boxId == BOXUSER1 && strlen(modeActivationConfig()->box_user_1_name) > 0) {
-        sbufWriteString(dst, modeActivationConfig()->box_user_1_name);
-    } else if (box->boxId == BOXUSER2 && strlen(modeActivationConfig()->box_user_2_name) > 0) {
-        sbufWriteString(dst, modeActivationConfig()->box_user_2_name);
-    } else if (box->boxId == BOXUSER3 && strlen(modeActivationConfig()->box_user_3_name) > 0) {
-        sbufWriteString(dst, modeActivationConfig()->box_user_3_name);
-    } else if (box->boxId == BOXUSER4 && strlen(modeActivationConfig()->box_user_4_name) > 0) {
-        sbufWriteString(dst, modeActivationConfig()->box_user_4_name);
-    } else
-#endif
-    {
-        sbufWriteString(dst, box->boxName);
-    }
+    sbufWriteString(dst, box->boxName);
     sbufWriteU8(dst, ';');
 }
 
@@ -188,13 +172,7 @@ void initActiveBoxIds(void)
         BME(BOXAIRMODE);
     }
 
-    bool acceleratorGainsEnabled = false;
-    for (unsigned i = 0; i < PID_PROFILE_COUNT; i++) {
-        if (pidProfiles(i)->itermAcceleratorGain != ITERM_ACCELERATOR_GAIN_OFF) {
-            acceleratorGainsEnabled = true;
-        }
-    }
-    if (acceleratorGainsEnabled && !featureIsEnabled(FEATURE_ANTI_GRAVITY)) {
+    if (!featureIsEnabled(FEATURE_ANTI_GRAVITY)) {
         BME(BOXANTIGRAVITY);
     }
 
@@ -250,9 +228,7 @@ void initActiveBoxIds(void)
     }
 
 #ifdef USE_DSHOT
-    bool configuredMotorProtocolDshot;
-    checkMotorProtocolEnabled(&motorConfig()->dev, &configuredMotorProtocolDshot);
-    if (configuredMotorProtocolDshot) {
+    if (isMotorProtocolDshot()) {
         BME(BOXFLIPOVERAFTERCRASH);
     }
 #endif

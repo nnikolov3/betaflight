@@ -237,7 +237,10 @@ void hottPrepareGPSResponse(HOTT_GPS_MSG_t *hottGPSMessage)
     hottGPSMessage->home_distance_L = GPS_distanceToHome & 0x00FF;
     hottGPSMessage->home_distance_H = GPS_distanceToHome >> 8;
 
-    int32_t altitudeM = getEstimatedAltitudeCm() / 100;
+    int32_t altitudeM = gpsSol.llh.altCm / 100;
+    if (!STATE(GPS_FIX)) {
+        altitudeM = getEstimatedAltitudeCm() / 100;
+    }
 
     const uint16_t hottGpsAltitude = constrain(altitudeM + HOTT_GPS_ALTITUDE_OFFSET, 0 , UINT16_MAX); // gpsSol.llh.alt in m ; offset = 500 -> O m
 
@@ -467,9 +470,9 @@ static void hottPrepareMessages(void) {
 static void hottTextmodeStart()
 {
     // Increase menu speed
-    taskInfo_t taskInfo;
+    cfTaskInfo_t taskInfo;
     getTaskInfo(TASK_TELEMETRY, &taskInfo);
-    telemetryTaskPeriod = taskInfo.desiredPeriodUs;
+    telemetryTaskPeriod = taskInfo.desiredPeriod;
     rescheduleTask(TASK_TELEMETRY, TASK_PERIOD_HZ(HOTT_TEXTMODE_TASK_PERIOD));
 
     rxSchedule = HOTT_TEXTMODE_RX_SCHEDULE;

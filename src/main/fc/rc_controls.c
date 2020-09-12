@@ -49,6 +49,7 @@
 #include "io/usb_cdc_hid.h"
 #include "io/dashboard.h"
 #include "io/gps.h"
+#include "io/motors.h"
 #include "io/vtx_control.h"
 
 #include "pg/pg.h"
@@ -157,8 +158,8 @@ void processRcStickPositions()
         }
     }
     if (stTmp == rcSticks) {
-        if (rcDelayMs <= INT16_MAX - (getTaskDeltaTimeUs(TASK_SELF) / 1000)) {
-            rcDelayMs += getTaskDeltaTimeUs(TASK_SELF) / 1000;
+        if (rcDelayMs <= INT16_MAX - (getTaskDeltaTime(TASK_SELF) / 1000)) {
+            rcDelayMs += getTaskDeltaTime(TASK_SELF) / 1000;
         }
     } else {
         rcDelayMs = 0;

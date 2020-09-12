@@ -35,6 +35,8 @@ typedef uint64_t config_streamer_buffer_align_type_t;
 #elif defined(STM32G4)
 #define CONFIG_STREAMER_BUFFER_SIZE 8   // Flash word = 64-bits
 typedef uint64_t config_streamer_buffer_align_type_t;
+#elif defined(RISCV_K210)
+#define CONFIG_STREAMER_BUFFER_SIZE 32
 #else
 #define CONFIG_STREAMER_BUFFER_SIZE 4
 typedef uint32_t config_streamer_buffer_align_type_t;
@@ -53,10 +55,8 @@ typedef struct config_streamer_s {
 } config_streamer_t;
 
 void config_streamer_init(config_streamer_t *c);
-
 void config_streamer_start(config_streamer_t *c, uintptr_t base, int size);
 int config_streamer_write(config_streamer_t *c, const uint8_t *p, uint32_t size);
 int config_streamer_flush(config_streamer_t *c);
-
 int config_streamer_finish(config_streamer_t *c);
 int config_streamer_status(config_streamer_t *c);

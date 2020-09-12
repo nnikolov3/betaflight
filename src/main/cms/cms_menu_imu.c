@@ -51,7 +51,6 @@
 
 #include "flight/mixer.h"
 #include "flight/pid.h"
-#include "flight/pid_init.h"
 
 #include "pg/pg.h"
 
@@ -107,10 +106,8 @@ static void setProfileIndexString(char *profileString, int profileIndex, char *p
     profileString[charIndex] = '\0';
 }
 
-static const void *cmsx_menuImu_onEnter(displayPort_t *pDisp)
+static const void *cmsx_menuImu_onEnter(void)
 {
-    UNUSED(pDisp);
-
     pidProfileIndex = getCurrentPidProfileIndex();
     tmpPidProfileIndex = pidProfileIndex + 1;
 
@@ -120,9 +117,8 @@ static const void *cmsx_menuImu_onEnter(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_menuImu_onExit(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_menuImu_onExit(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     changePidProfile(pidProfileIndex);
@@ -167,19 +163,16 @@ static const void *cmsx_PidRead(void)
     return NULL;
 }
 
-static const void *cmsx_PidOnEnter(displayPort_t *pDisp)
+static const void *cmsx_PidOnEnter(void)
 {
-    UNUSED(pDisp);
-
     setProfileIndexString(pidProfileIndexString, pidProfileIndex, currentPidProfile->profileName);
     cmsx_PidRead();
 
     return NULL;
 }
 
-static const void *cmsx_PidWriteback(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_PidWriteback(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     pidProfile_t *pidProfile = currentPidProfile;
@@ -239,9 +232,8 @@ static const void *cmsx_RateProfileRead(void)
     return NULL;
 }
 
-static const void *cmsx_RateProfileWriteback(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_RateProfileWriteback(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     memcpy(controlRateProfilesMutable(rateProfileIndex), &rateProfile, sizeof(controlRateConfig_t));
@@ -249,10 +241,8 @@ static const void *cmsx_RateProfileWriteback(displayPort_t *pDisp, const OSD_Ent
     return NULL;
 }
 
-static const void *cmsx_RateProfileOnEnter(displayPort_t *pDisp)
+static const void *cmsx_RateProfileOnEnter(void)
 {
-    UNUSED(pDisp);
-
     setProfileIndexString(rateProfileIndexString, rateProfileIndex, controlRateProfilesMutable(rateProfileIndex)->profileName);
     cmsx_RateProfileRead();
 
@@ -267,9 +257,9 @@ static const OSD_Entry cmsx_menuRateProfileEntries[] =
     { "RC P RATE",   OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rcRates[FD_PITCH],    1, CONTROL_RATE_CONFIG_RC_RATES_MAX, 1, 10 }, 0 },
     { "RC Y RATE",   OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rcRates[FD_YAW], 1, CONTROL_RATE_CONFIG_RC_RATES_MAX, 1, 10 }, 0 },
 
-    { "ROLL SUPER",  OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rates[FD_ROLL],   0, CONTROL_RATE_CONFIG_RATE_MAX, 1, 10 }, 0 },
-    { "PITCH SUPER", OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rates[FD_PITCH],   0, CONTROL_RATE_CONFIG_RATE_MAX, 1, 10 }, 0 },
-    { "YAW SUPER",   OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rates[FD_YAW],   0, CONTROL_RATE_CONFIG_RATE_MAX, 1, 10 }, 0 },
+    { "ROLL SUPER",  OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rates[FD_ROLL],   0, 100, 1, 10 }, 0 },
+    { "PITCH SUPER", OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rates[FD_PITCH],   0, 100, 1, 10 }, 0 },
+    { "YAW SUPER",   OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rates[FD_YAW],   0, 100, 1, 10 }, 0 },
 
     { "RC R EXPO",   OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rcExpo[FD_ROLL],    0, 100, 1, 10 }, 0 },
     { "RC P EXPO",   OME_FLOAT,  NULL, &(OSD_FLOAT_t) { &rateProfile.rcExpo[FD_PITCH],    0, 100, 1, 10 }, 0 },
@@ -305,10 +295,8 @@ static uint8_t cmsx_launchControlThrottlePercent;
 static uint8_t cmsx_launchControlAngleLimit;
 static uint8_t cmsx_launchControlGain;
 
-static const void *cmsx_launchControlOnEnter(displayPort_t *pDisp)
+static const void *cmsx_launchControlOnEnter(void)
 {
-    UNUSED(pDisp);
-
     const pidProfile_t *pidProfile = pidProfiles(pidProfileIndex);
 
     cmsx_launchControlMode  = pidProfile->launchControlMode;
@@ -320,9 +308,8 @@ static const void *cmsx_launchControlOnEnter(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_launchControlOnExit(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_launchControlOnExit(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     pidProfile_t *pidProfile = pidProfilesMutable(pidProfileIndex);
@@ -389,10 +376,8 @@ static uint8_t cmsx_ff_interpolate_sp;
 static uint8_t cmsx_ff_smooth_factor;
 #endif
 
-static const void *cmsx_profileOtherOnEnter(displayPort_t *pDisp)
+static const void *cmsx_profileOtherOnEnter(void)
 {
-    UNUSED(pDisp);
-
     setProfileIndexString(pidProfileIndexString, pidProfileIndex, currentPidProfile->profileName);
 
     const pidProfile_t *pidProfile = pidProfiles(pidProfileIndex);
@@ -434,9 +419,8 @@ static const void *cmsx_profileOtherOnEnter(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_profileOtherOnExit(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_profileOtherOnExit(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     pidProfile_t *pidProfile = pidProfilesMutable(pidProfileIndex);
@@ -491,7 +475,7 @@ static const OSD_Entry cmsx_menuProfileOtherEntries[] = {
     { "ANGLE STR",   OME_UINT8,  NULL, &(OSD_UINT8_t)  { &cmsx_angleStrength,          0,    200,   1  }   , 0 },
     { "HORZN STR",   OME_UINT8,  NULL, &(OSD_UINT8_t)  { &cmsx_horizonStrength,        0,    200,   1  }   , 0 },
     { "HORZN TRS",   OME_UINT8,  NULL, &(OSD_UINT8_t)  { &cmsx_horizonTransition,      0,    200,   1  }   , 0 },
-    { "AG GAIN",     OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_itermAcceleratorGain,   ITERM_ACCELERATOR_GAIN_OFF, ITERM_ACCELERATOR_GAIN_MAX, 10 }   , 0 },
+    { "AG GAIN",     OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_itermAcceleratorGain,   1000, 30000, 10 }   , 0 },
     { "AG THR",      OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_itermThrottleThreshold, 20,   1000,  1  }   , 0 },
 #ifdef USE_THROTTLE_BOOST
     { "THR BOOST",   OME_UINT8,  NULL, &(OSD_UINT8_t)  { &cmsx_throttleBoost,          0,    100,   1  }   , 0 },
@@ -543,10 +527,8 @@ static uint16_t gyroConfig_gyro_soft_notch_hz_2;
 static uint16_t gyroConfig_gyro_soft_notch_cutoff_2;
 static uint8_t  gyroConfig_gyro_to_use;
 
-static const void *cmsx_menuGyro_onEnter(displayPort_t *pDisp)
+static const void *cmsx_menuGyro_onEnter(void)
 {
-    UNUSED(pDisp);
-
     gyroConfig_gyro_lowpass_hz =  gyroConfig()->gyro_lowpass_hz;
     gyroConfig_gyro_lowpass2_hz =  gyroConfig()->gyro_lowpass2_hz;
     gyroConfig_gyro_soft_notch_hz_1 = gyroConfig()->gyro_soft_notch_hz_1;
@@ -558,9 +540,8 @@ static const void *cmsx_menuGyro_onEnter(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_menuGyro_onExit(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_menuGyro_onExit(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     gyroConfigMutable()->gyro_lowpass_hz =  gyroConfig_gyro_lowpass_hz;
@@ -621,10 +602,8 @@ static uint16_t dynFiltDtermMax;
 static uint8_t dynFiltDtermExpo;
 #endif
 
-static const void *cmsx_menuDynFilt_onEnter(displayPort_t *pDisp)
+static const void *cmsx_menuDynFilt_onEnter(void)
 {
-    UNUSED(pDisp);
-
 #ifdef USE_GYRO_DATA_ANALYSE
     dynFiltNotchMaxHz   = gyroConfig()->dyn_notch_max_hz;
     dynFiltWidthPercent = gyroConfig()->dyn_notch_width_percent;
@@ -643,9 +622,8 @@ static const void *cmsx_menuDynFilt_onEnter(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_menuDynFilt_onExit(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_menuDynFilt_onExit(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
 #ifdef USE_GYRO_DATA_ANALYSE
@@ -708,10 +686,8 @@ static uint16_t cmsx_dterm_notch_hz;
 static uint16_t cmsx_dterm_notch_cutoff;
 static uint16_t cmsx_yaw_lowpass_hz;
 
-static const void *cmsx_FilterPerProfileRead(displayPort_t *pDisp)
+static const void *cmsx_FilterPerProfileRead(void)
 {
-    UNUSED(pDisp);
-
     const pidProfile_t *pidProfile = pidProfiles(pidProfileIndex);
 
     cmsx_dterm_lowpass_hz   = pidProfile->dterm_lowpass_hz;
@@ -723,9 +699,8 @@ static const void *cmsx_FilterPerProfileRead(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_FilterPerProfileWriteback(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_FilterPerProfileWriteback(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     pidProfile_t *pidProfile = currentPidProfile;
@@ -779,10 +754,8 @@ static const char * const cmsx_ProfileNames[] = {
 static OSD_TAB_t cmsx_PidProfileTable = { &cmsx_dstPidProfile, 3, cmsx_ProfileNames };
 static OSD_TAB_t cmsx_ControlRateProfileTable = { &cmsx_dstControlRateProfile, 3, cmsx_ProfileNames };
 
-static const void *cmsx_menuCopyProfile_onEnter(displayPort_t *pDisp)
+static const void *cmsx_menuCopyProfile_onEnter(void)
 {
-    UNUSED(pDisp);
-
     cmsx_dstPidProfile = 0;
     cmsx_dstControlRateProfile = 0;
 

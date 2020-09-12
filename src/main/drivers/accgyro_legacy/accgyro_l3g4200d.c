@@ -25,8 +25,6 @@
 
 #include "platform.h"
 
-#ifdef USE_GYRO_L3G4200D
-
 #include "drivers/accgyro/accgyro.h"
 #include "accgyro_l3g4200d.h"
 
@@ -117,4 +115,3 @@ bool l3g4200dDetect(gyroDev_t *gyro)
 
     return true;
 }
-#endif

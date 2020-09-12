@@ -24,8 +24,6 @@
 
 #include "platform.h"
 
-#ifdef USE_GYRO_SPI_ICM20649
-
 #include "common/axis.h"
 #include "common/maths.h"
 
@@ -166,9 +164,9 @@ bool icm20649SpiGyroDetect(gyroDev_t *gyro)
     gyro->initFn = icm20649GyroInit;
     gyro->readFn = icm20649GyroReadSPI;
 
-    // 16.384 dps/lsb scalefactor for 2000dps sensors
-    //  8.192 dps/lsb scalefactor for 4000dps sensors
-    gyro->scale = (gyro->gyro_high_fsr ? GYRO_SCALE_4000DPS : GYRO_SCALE_2000DPS);
+    // 16.4 dps/lsb 2kDps
+    //  8.2 dps/lsb 4kDps
+    gyro->scale = 1.0f / (gyro->gyro_high_fsr ? 8.2f : 16.4f);
 
     return true;
 }
@@ -205,4 +203,3 @@ bool icm20649AccRead(accDev_t *acc)
 
     return true;
 }
-#endif

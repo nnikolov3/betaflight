@@ -450,7 +450,7 @@ void max7456PreInit(const max7456Config_t *max7456Config)
 // Here we init only CS and try to init MAX for first time.
 // Also detect device type (MAX v.s. AT)
 
-max7456InitStatus_e max7456Init(const max7456Config_t *max7456Config, const vcdProfile_t *pVcdProfile, bool cpuOverclock)
+bool max7456Init(const max7456Config_t *max7456Config, const vcdProfile_t *pVcdProfile, bool cpuOverclock)
 {
     max7456DeviceDetected = false;
 
@@ -462,13 +462,13 @@ max7456InitStatus_e max7456Init(const max7456Config_t *max7456Config, const vcdP
     max7456HardwareReset();
 
     if (!max7456Config->csTag || !max7456Config->spiDevice) {
-        return MAX7456_INIT_NOT_CONFIGURED;
+        return false;
     }
 
     busdev->busdev_u.spi.csnPin = IOGetByTag(max7456Config->csTag);
 
     if (!IOIsFreeOrPreinit(busdev->busdev_u.spi.csnPin)) {
-        return MAX7456_INIT_NOT_CONFIGURED;
+        return false;
     }
 
     IOInit(busdev->busdev_u.spi.csnPin, OWNER_OSD_CS, 0);
@@ -492,7 +492,7 @@ max7456InitStatus_e max7456Init(const max7456Config_t *max7456Config, const vcdP
 
     if (osdm != 0x1B) {
         IOConfigGPIO(busdev->busdev_u.spi.csnPin, IOCFG_IPU);
-        return MAX7456_INIT_NOT_FOUND;
+        return false;
     }
 
     // At this point, we can claim the ownership of the CS pin
@@ -560,7 +560,7 @@ max7456InitStatus_e max7456Init(const max7456Config_t *max7456Config, const vcdP
 #endif
 
     // Real init will be made later when driver detect idle.
-    return MAX7456_INIT_OK;
+    return true;
 }
 
 /**

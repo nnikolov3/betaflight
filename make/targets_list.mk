@@ -165,6 +165,7 @@ LEGACY_TARGETS := MATEKF405 \
     XRACERF4 \
     AG3XF7 \
     YUPIF7 \
+<<<<<<< HEAD
     PYRODRONEF4 \
     AG3XF4 \
     COLIBRI \
@@ -200,6 +201,9 @@ LEGACY_TARGETS := MATEKF405 \
     STACKX \
     VRRACE \
     KROOZX
+=======
+    PYRODRONEF4
+>>>>>>> 88a5996bb... added riscv
 
 # Temporarily excluded to get CI coverage for USE_SPI_TRANSACTION
 #    STM32F4DISCOVERY \

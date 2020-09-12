@@ -42,6 +42,8 @@
 #include "drivers/time.h"
 #include "drivers/io.h"
 
+#include "io/motors.h"
+
 #include "config/config.h"
 #include "fc/controlrate_profile.h"
 #include "fc/rc_controls.h"
@@ -297,11 +299,15 @@ static FAST_DATA_ZERO_INIT float idleMinMotorRps;
 static FAST_DATA_ZERO_INIT float idleP;
 static FAST_DATA_ZERO_INIT float oldMinRps;
 #endif
+<<<<<<< HEAD
 #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
 static FAST_DATA_ZERO_INIT float vbatSagCompensationFactor;
 static FAST_DATA_ZERO_INIT float vbatFull;
 static FAST_DATA_ZERO_INIT float vbatRangeToCompensate;
 #endif
+=======
+
+>>>>>>> 88a5996bb... added riscv
 
 uint8_t getMotorCount(void)
 {
@@ -347,14 +353,19 @@ void initEscEndpoints(void)
         motorOutputLimit = currentPidProfile->motor_output_limit / 100.0f;
     }
 
+<<<<<<< HEAD
     motorInitEndpoints(motorConfig(), motorOutputLimit, &motorOutputLow, &motorOutputHigh, &disarmMotorOutput, &deadbandMotor3dHigh, &deadbandMotor3dLow);
     if (!feature3dEnabled && currentPidProfile->idle_min_rpm) {
         motorOutputLow = DSHOT_MIN_THROTTLE;
     }
+=======
+    motorInitEndpoints(motorOutputLimit, &motorOutputLow, &motorOutputHigh, &disarmMotorOutput, &deadbandMotor3dHigh, &deadbandMotor3dLow);
+>>>>>>> 88a5996bb... added riscv
 
     rcCommandThrottleRange = PWM_RANGE_MAX - PWM_RANGE_MIN;
 }
 
+<<<<<<< HEAD
 // Initialize pidProfile related mixer settings
 void mixerInitProfile(void)
 {
@@ -378,6 +389,8 @@ void mixerInitProfile(void)
 #endif
 }
 
+=======
+>>>>>>> 88a5996bb... added riscv
 void mixerInit(mixerMode_e mixerMode)
 {
     currentMixerMode = mixerMode;
@@ -390,12 +403,12 @@ void mixerInit(mixerMode_e mixerMode)
         mixerTricopterInit();
     }
 #endif
-
 #ifdef USE_DYN_IDLE
+    idleMinMotorRps = currentPidProfile->idle_min_rpm * 100.0f / 60.0f;
+    idleMaxIncrease = currentPidProfile->idle_max_increase * 0.001f;
     idleThrottleOffset = motorConfig()->digitalIdleOffsetValue * 0.0001f;
+    idleP = currentPidProfile->idle_p * 0.0001f;
 #endif
-
-    mixerInitProfile();
 }
 
 #ifdef USE_LAUNCH_CONTROL
@@ -626,6 +639,10 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
         throttle = rcCommand[THROTTLE] - PWM_RANGE_MIN + throttleAngleCorrection;
 #ifdef USE_DYN_IDLE
         if (idleMinMotorRps > 0.0f) {
+<<<<<<< HEAD
+=======
+            motorOutputLow = DSHOT_MIN_THROTTLE;
+>>>>>>> 88a5996bb... added riscv
             const float maxIncrease = isAirmodeActivated() ? idleMaxIncrease : 0.04f;
             const float minRps = rpmMinMotorFrequency();
             const float targetRpsChangeRate = (idleMinMotorRps - minRps) * currentPidProfile->idle_adjustment_speed;
@@ -639,31 +656,24 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
             DEBUG_SET(DEBUG_DYN_IDLE, 1, targetRpsChangeRate);
             DEBUG_SET(DEBUG_DYN_IDLE, 2, error);
             DEBUG_SET(DEBUG_DYN_IDLE, 3, minRps);
+<<<<<<< HEAD
         } else {
             motorRangeMinIncrease = 0;
         }
 #endif
+=======
+>>>>>>> 88a5996bb... added riscv
 
-#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
-        float motorRangeAttenuationFactor = 0;
-        // reduce motorRangeMax when battery is full
-        if (vbatSagCompensationFactor > 0.0f) {
-            const uint16_t currentCellVoltage = getBatterySagCellVoltage();
-            // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
-            float batteryGoodness = 1.0f - constrainf((vbatFull - currentCellVoltage) / vbatRangeToCompensate, 0.0f, 1.0f);
-            motorRangeAttenuationFactor = (vbatRangeToCompensate / vbatFull) * batteryGoodness * vbatSagCompensationFactor;
-            DEBUG_SET(DEBUG_BATTERY, 2, batteryGoodness * 100);
-            DEBUG_SET(DEBUG_BATTERY, 3, motorRangeAttenuationFactor * 1000);
         }
-        motorRangeMax = motorOutputHigh - motorRangeAttenuationFactor * (motorOutputHigh - motorOutputLow);
-#else
-        motorRangeMax = motorOutputHigh;
 #endif
-
         currentThrottleInputRange = rcCommandThrottleRange;
         motorRangeMin = motorOutputLow + motorRangeMinIncrease * (motorOutputHigh - motorOutputLow);
+<<<<<<< HEAD
+=======
+        motorRangeMax = motorOutputHigh;
+>>>>>>> 88a5996bb... added riscv
         motorOutputMin = motorRangeMin;
-        motorOutputRange = motorRangeMax - motorRangeMin;
+        motorOutputRange = motorOutputHigh - motorOutputMin;
         motorOutputMixSign = 1;
     }
 
@@ -703,7 +713,7 @@ static void applyFlipOverAfterCrashModeToMotors(void)
             signYaw = 0;
         }
 
-        const float cosPhi = (stickDeflectionLength > 0) ? (stickDeflectionPitchAbs + stickDeflectionRollAbs) / (sqrtf(2.0f) * stickDeflectionLength) : 0;
+        const float cosPhi = (stickDeflectionPitchAbs + stickDeflectionRollAbs) / (sqrtf(2.0f) * stickDeflectionLength);
         const float cosThreshold = sqrtf(3.0f)/2.0f; // cos(PI/6.0f)
 
         if (cosPhi < cosThreshold) {

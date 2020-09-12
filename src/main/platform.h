@@ -22,8 +22,8 @@
 
 #define NOINLINE __attribute__((noinline))
 
-#if !defined(UNIT_TEST) && !defined(SIMULATOR_BUILD) && !(USBD_DEBUG_LEVEL > 0)
-#pragma GCC poison sprintf snprintf
+#if !defined(UNIT_TEST) && !defined(SIMULATOR_BUILD) && !(USBD_DEBUG_LEVEL>0)
+//#pragma GCC poison sprintf snprintf
 #endif
 
 #if defined(STM32H743xx) || defined(STM32H750xx)
@@ -117,7 +117,32 @@
 
 #elif defined(SIMULATOR_BUILD)
 
-// Nop
+//NOP
+
+#elif defined(MAIXBIT)
+
+#include "riscv_k210_entry.h"
+#include "riscv_k210_fpioa.h"
+#include "riscv_k210_atomic.h"
+#include "riscv_k210_bsp.h"
+#include "riscv_k210_dump.h"
+#include "riscv_k210_encoding.h"
+#include "riscv_k210_interrupt.h"
+#include "riscv_k210_platform.h"
+#include "riscv_k210_printf.h"
+#include "riscv_k210_sleep.h"
+#include "riscv_k210_syscalls.h"
+#include "riscv_k210_util.h"
+
+#define U_ID_0 (*(uint32_t*)0x04E4796B)
+#define U_ID_1 (*(uint32_t*)0x00000000)
+#define U_ID_2 (*(uint32_t*)0x00000000)
+
+#ifndef RISCV_K210
+#define RISCV_K210
+#endif
+
+//NOP
 
 #else // STM32F10X
 #error "Invalid chipset specified. Update platform.h"

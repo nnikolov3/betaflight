@@ -78,10 +78,8 @@ static void cmsx_Vtx_ConfigWriteback(void)
     saveConfigAndNotify();
 }
 
-static const void *cmsx_Vtx_onEnter(displayPort_t *pDisp)
+static const void *cmsx_Vtx_onEnter(void)
 {
-    UNUSED(pDisp);
-
     cmsx_Vtx_ConfigRead();
 
     entryVtxBand.val = &cmsx_vtxBand;
@@ -99,9 +97,8 @@ static const void *cmsx_Vtx_onEnter(displayPort_t *pDisp)
     return NULL;
 }
 
-static const void *cmsx_Vtx_onExit(displayPort_t *pDisp, const OSD_Entry *self)
+static const void *cmsx_Vtx_onExit(const OSD_Entry *self)
 {
-    UNUSED(pDisp);
     UNUSED(self);
 
     vtxCommonSetPitMode(vtxCommonDevice(), cmsx_vtxPit);

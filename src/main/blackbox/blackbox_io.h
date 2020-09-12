@@ -46,8 +46,6 @@ int blackboxWriteString(const char *s);
 
 void blackboxDeviceFlush(void);
 bool blackboxDeviceFlushForce(void);
-bool blackboxDeviceFlushForceComplete(void);
-
 bool blackboxDeviceOpen(void);
 void blackboxDeviceClose(void);
 

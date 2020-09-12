@@ -18,6 +18,9 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+// temp for debugging
+#include "capstone_print.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -41,11 +44,14 @@
 #include "drivers/flash.h"
 #include "drivers/system.h"
 
+// riscv files
+#include "drivers/flash_riscv_k210.h"
+
 static uint16_t eepromConfigSize;
 
 typedef enum {
-    CR_CLASSICATION_SYSTEM   = 0,
-    CR_CLASSICATION_PROFILE_LAST = CR_CLASSICATION_SYSTEM,
+	CR_CLASSICATION_SYSTEM   = 0,
+	CR_CLASSICATION_PROFILE_LAST = CR_CLASSICATION_SYSTEM,
 } configRecordFlags_e;
 
 #define CR_CLASSIFICATION_MASK  (0x3)
@@ -84,12 +90,25 @@ typedef struct {
 } PG_PACKED packingTest_t;
 
 #if defined(CONFIG_IN_EXTERNAL_FLASH)
+#ifdef RISCV_K210
+bool loadEEPROMFromExternalFlash(void)
+{
+    // got this address from one of the example from k210...not sure if this is right
+	uintptr_t flashStartAddress =FLASH_START_ADDR ;
+    uint32_t totalBytesRead = 0;
+	char buffer[200];
+	flash_init(3,0);
+    // flash_read_data will return FLASH_OK = 0 if successful
+   bool success = flash_read_data ( flashStartAddress, &eepromData[totalBytesRead], EEPROM_SIZE, FLASH_QUAD );
+	sprintf(buffer, "READING from flash is successful if 0=%d ", success);
+	print_my_msg(buffer, __FUNCTION__, __FILE__, __LINE__);
+    return !success;
+}
+#else
 bool loadEEPROMFromExternalFlash(void)
 {
     const flashPartition_t *flashPartition = flashPartitionFindByType(FLASH_PARTITION_TYPE_CONFIG);
     const flashGeometry_t *flashGeometry = flashGetGeometry();
-
-    uint32_t flashStartAddress = flashPartition->startSector * flashGeometry->sectorSize;
 
     uint32_t totalBytesRead = 0;
     int bytesRead = 0;
@@ -98,6 +117,7 @@ bool loadEEPROMFromExternalFlash(void)
 
     do {
         bytesRead = flashReadBytes(flashStartAddress + totalBytesRead, &eepromData[totalBytesRead], EEPROM_SIZE - totalBytesRead);
+
         if (bytesRead > 0) {
             totalBytesRead += bytesRead;
             success = (totalBytesRead == EEPROM_SIZE);
@@ -106,6 +126,7 @@ bool loadEEPROMFromExternalFlash(void)
 
     return success;
 }
+#endif
 #elif defined(CONFIG_IN_SDCARD)
 
 enum {
@@ -256,8 +277,12 @@ void initEEPROM(void)
     loadEEPROMFromFile();
 #elif defined(CONFIG_IN_EXTERNAL_FLASH)
     bool eepromLoaded = loadEEPROMFromExternalFlash();
+    char buffer[200];
+    sprintf(buffer, "Loaded EEPROM from Flash - %s", eepromLoaded ? "successful" : "unsuccessful");
+    print_my_msg(buffer, __FUNCTION__, __FILE__, __LINE__);
     if (!eepromLoaded) {
         // Flash read failed - just die now
+        printf("%s:%s:%d - Flash read failed \n\n", __FUNCTION__,__FILE__,__LINE__);
         failureMode(FAILURE_FLASH_READ_FAILED);
     }
 #elif defined(CONFIG_IN_SDCARD)
@@ -275,9 +300,10 @@ bool isEEPROMVersionValid(void)
     const configHeader_t *header = (const configHeader_t *)p;
 
     if (header->eepromConfigVersion != EEPROM_CONF_VERSION) {
+        print_my_msg("EEPROM Version Valid - unsuccessful", __FUNCTION__, __FILE__, __LINE__);
         return false;
     }
-
+    print_my_msg("EEPROM Version Valid - successful", __FUNCTION__, __FILE__, __LINE__);
     return true;
 }
 
@@ -288,6 +314,7 @@ bool isEEPROMStructureValid(void)
     const configHeader_t *header = (const configHeader_t *)p;
 
     if (header->magic_be != 0xBE) {
+        print_my_msg("EEPROM Structure Not Valid - magic_be (0xBE) in Header File Missing", __FUNCTION__, __FILE__, __LINE__);
         return false;
     }
 
@@ -302,6 +329,7 @@ bool isEEPROMStructureValid(void)
             // Found the end.  Stop scanning.
             break;
         }
+
         if (p + record->size >= &__config_end
             || record->size < sizeof(*record)) {
             // Too big or too small.
@@ -323,7 +351,6 @@ bool isEEPROMStructureValid(void)
     p += sizeof(storedCrc);
 
     eepromConfigSize = p - &__config_start;
-
     // CRC has the property that if the CRC itself is included in the calculation the resulting CRC will have constant value
     return crc == CRC_CHECK_VALUE;
 }
@@ -336,7 +363,6 @@ uint16_t getEEPROMConfigSize(void)
 size_t getEEPROMStorageSize(void)
 {
 #if defined(CONFIG_IN_EXTERNAL_FLASH)
-
     const flashPartition_t *flashPartition = flashPartitionFindByType(FLASH_PARTITION_TYPE_CONFIG);
     return FLASH_PARTITION_SECTOR_COUNT(flashPartition) * flashGetGeometry()->sectorSize;
 #endif
@@ -352,21 +378,18 @@ size_t getEEPROMStorageSize(void)
 // this function assumes that EEPROM content is valid
 static const configRecord_t *findEEPROM(const pgRegistry_t *reg, configRecordFlags_e classification)
 {
-    const uint8_t *p = &__config_start;
-    p += sizeof(configHeader_t);             // skip header
-    while (true) {
-        const configRecord_t *record = (const configRecord_t *)p;
-        if (record->size == 0
-            || p + record->size >= &__config_end
-            || record->size < sizeof(*record))
-            break;
-        if (pgN(reg) == record->pgn
-            && (record->flags & CR_CLASSIFICATION_MASK) == classification)
-            return record;
-        p += record->size;
-    }
-    // record not found
-    return NULL;
+	const uint8_t* p = &__config_start;
+	p += sizeof( configHeader_t ); // skip header
+	while( true ) {
+		const configRecord_t* record = ( const configRecord_t* )p;
+		if( record->size == 0 || p + record->size >= &__config_end || record->size < sizeof( *record ) ) break;
+		if( pgN( reg ) == record->pgn && ( record->flags & CR_CLASSIFICATION_MASK ) == classification ) {
+			return record;
+		}
+		p += record->size;
+	}
+	// record not found
+	return NULL;
 }
 
 // Initialize all PG records from EEPROM.
@@ -375,53 +398,52 @@ static const configRecord_t *findEEPROM(const pgRegistry_t *reg, configRecordFla
 bool loadEEPROM(void)
 {
     bool success = true;
-
-    PG_FOREACH(reg) {
-        const configRecord_t *rec = findEEPROM(reg, CR_CLASSICATION_SYSTEM);
-        if (rec) {
-            // config from EEPROM is available, use it to initialize PG. pgLoad will handle version mismatch
-            if (!pgLoad(reg, rec->pg, rec->size - offsetof(configRecord_t, pg), rec->version)) {
-                success = false;
-            }
-        } else {
-            pgReset(reg);
-
-            success = false;
-        }
+    char buffer[ 200 ];
+    PG_FOREACH( reg ) {
+	    const configRecord_t* rec = findEEPROM( reg, CR_CLASSICATION_SYSTEM );
+	    if( rec ) {
+		    // config from EEPROM is available, use it to initialize PG. pgLoad will handle version mismatch
+		    if( !pgLoad( reg, rec->pg, rec->size - offsetof( configRecord_t, pg ), rec->version ) ) {
+			    print_my_msg( "Unable to load pgs from EEPROM", __FUNCTION__, __FILE__, __LINE__ );
+			    success = false;
+		    }
+	    } else {
+		    pgReset( reg );
+		    sprintf( buffer, "Config Unavailable from EEPROM - PGn %d Initialized", ( reg->pgn ) );
+		    print_my_msg( buffer, __FUNCTION__, __FILE__, __LINE__ );
+		    success = false;
+	    }
     }
-
     return success;
 }
 
-static bool writeSettingsToEEPROM(void)
+/*static*/ bool writeSettingsToEEPROM(void)
 {
-    config_streamer_t streamer;
-    config_streamer_init(&streamer);
-
-    config_streamer_start(&streamer, (uintptr_t)&__config_start, &__config_end - &__config_start);
-
-    configHeader_t header = {
-        .eepromConfigVersion =  EEPROM_CONF_VERSION,
-        .magic_be =             0xBE,
-    };
-
-    config_streamer_write(&streamer, (uint8_t *)&header, sizeof(header));
-    uint16_t crc = CRC_START_VALUE;
-    crc = crc16_ccitt_update(crc, (uint8_t *)&header, sizeof(header));
-    PG_FOREACH(reg) {
-        const uint16_t regSize = pgSize(reg);
-        configRecord_t record = {
-            .size = sizeof(configRecord_t) + regSize,
-            .pgn = pgN(reg),
-            .version = pgVersion(reg),
-            .flags = 0
-        };
-
-        record.flags |= CR_CLASSICATION_SYSTEM;
-        config_streamer_write(&streamer, (uint8_t *)&record, sizeof(record));
-        crc = crc16_ccitt_update(crc, (uint8_t *)&record, sizeof(record));
-        config_streamer_write(&streamer, reg->address, regSize);
-        crc = crc16_ccitt_update(crc, reg->address, regSize);
+	config_streamer_t streamer;
+	config_streamer_init( &streamer );
+	config_streamer_start( &streamer, ( uintptr_t )&__config_start, &__config_end - &__config_start );
+	configHeader_t header = {
+	        .eepromConfigVersion = EEPROM_CONF_VERSION,
+	        .magic_be = 0xBE,
+	};
+	printf( "Config Header includes EEPROM_CONF_VERSION = %d and magic_be = %x \n", header.eepromConfigVersion,
+	        header.magic_be );
+	config_streamer_write( &streamer, ( uint8_t* )&header, sizeof( header ) );
+	uint16_t crc = CRC_START_VALUE;
+	crc = crc16_ccitt_update( crc, ( uint8_t* )&header, sizeof( header ) );
+	PG_FOREACH( reg ) {
+		const uint16_t regSize = pgSize( reg );
+		configRecord_t record = { .size = sizeof( configRecord_t ) + regSize,
+		                          .pgn = pgN( reg ),
+		                          .version = pgVersion( reg ),
+		                          .flags = 0 };
+		record.flags |= CR_CLASSICATION_SYSTEM;
+		config_streamer_write( &streamer, ( uint8_t* )&record, sizeof( record ) );
+		crc = crc16_ccitt_update( crc, ( uint8_t* )&record, sizeof( record ) );
+		config_streamer_write( &streamer, reg->address, regSize );
+		crc = crc16_ccitt_update( crc, reg->address, regSize );
+		printf( "Writing PGn %d | Size %dKB | Version %d | CRC CHECK %d |Address of Group in RAM %p \n",
+		        record.pgn, record.size, record.version, crc, &reg->address );
     }
 
     configFooter_t footer = {
@@ -444,28 +466,37 @@ static bool writeSettingsToEEPROM(void)
 
 void writeConfigToEEPROM(void)
 {
-    bool success = false;
-    // write it
-    for (int attempt = 0; attempt < 3 && !success; attempt++) {
-        if (writeSettingsToEEPROM()) {
-            success = true;
+	uintptr_t flashStartAddress =FLASH_START_ADDR ;
+	bool success = false;
+	char buffer_k210[200];
+	sprintf(buffer_k210, "Writing to Flash at Starting Address 0X%02lx",flashStartAddress );
+	print_my_msg(buffer_k210, __FUNCTION__, __FILE__, __LINE__);
+	// write it
+	for (int attempt = 0; attempt < 3 && !success; attempt++) {
+		if (writeSettingsToEEPROM()) {
+			success = true;
 
-#ifdef CONFIG_IN_EXTERNAL_FLASH
-            // copy it back from flash to the in-memory buffer.
-            success = loadEEPROMFromExternalFlash();
-#endif
-#ifdef CONFIG_IN_SDCARD
-            // copy it back from flash to the in-memory buffer.
-            success = loadEEPROMFromSDCard();
-#endif
-        }
-    }
+			sprintf(buffer_k210, "Flash Write Complete - %s", success ? "successful" : "unsuccessful");
+			print_my_msg(buffer_k210, __FUNCTION__, __FILE__, __LINE__);
 
+			#ifdef CONFIG_IN_EXTERNAL_FLASH
+			// copy it back from flash to the in-memory buffer.
+			success = loadEEPROMFromExternalFlash();
+			char buffer[200];
+			sprintf(buffer, "Loaded EEPROM from Flash - %s", success ? "successful" : "unsuccessful");
+			print_my_msg(buffer, __FUNCTION__, __FILE__, __LINE__);
+			#endif
+			#ifdef CONFIG_IN_SDCARD
+			// copy it back from flash to the in-memory buffer.
+			success = loadEEPROMFromSDCard();
+			#endif
+		}
+	}
 
-    if (success && isEEPROMVersionValid() && isEEPROMStructureValid()) {
-        return;
-    }
+	if (success && isEEPROMVersionValid() && isEEPROMStructureValid()) {
+		return;
+	}
 
-    // Flash write failed - just die now
-    failureMode(FAILURE_CONFIG_STORE_FAILURE);
+	// Flash write failed - just die now
+	failureMode(FAILURE_CONFIG_STORE_FAILURE);
 }

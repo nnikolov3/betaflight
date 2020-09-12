@@ -126,10 +126,11 @@ bool mpu6500SpiGyroDetect(gyroDev_t *gyro)
     case MPU_9250_SPI:
     case ICM_20608_SPI:
     case ICM_20602_SPI:
-        gyro->scale = GYRO_SCALE_2000DPS;
+        // 16.4 dps/lsb scalefactor
+        gyro->scale = 1.0f / 16.4f;
         break;
     case ICM_20601_SPI:
-        gyro->scale = (gyro->gyro_high_fsr ? GYRO_SCALE_4000DPS : GYRO_SCALE_2000DPS);
+        gyro->scale = 1.0f / (gyro->gyro_high_fsr ? 8.2f : 16.4f);
         break;
     default:
         return false;

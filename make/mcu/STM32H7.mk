@@ -169,7 +169,7 @@ FIRMWARE_SIZE      := 448
 # TARGET_FLASH now becomes the amount of RAM memory that is occupied by the firmware
 # and the maximum size of the data stored on the external storage device.
 MCU_FLASH_SIZE     := FIRMWARE_SIZE
-DEFAULT_LD_SCRIPT   = $(LINKER_DIR)/stm32_ram_h743.ld
+DEFAULT_LD_SCRIPT   = $(LINKER_DIR)/stm32_flash_h743_ram_based.ld
 endif
 
 else ifeq ($(TARGET),$(filter $(TARGET),$(H750xB_TARGETS)))
@@ -187,7 +187,7 @@ FIRMWARE_SIZE      := 448
 # TARGET_FLASH now becomes the amount of RAM memory that is occupied by the firmware
 # and the maximum size of the data stored on the external storage device.
 MCU_FLASH_SIZE     := FIRMWARE_SIZE
-DEFAULT_LD_SCRIPT   = $(LINKER_DIR)/stm32_ram_h750_exst.ld
+DEFAULT_LD_SCRIPT   = $(LINKER_DIR)/stm32_flash_h750_exst.ld
 endif
 
 ifeq ($(EXST),yes)
@@ -242,7 +242,6 @@ MCU_COMMON_SRC = \
             drivers/light_ws2811strip_hal.c \
             drivers/adc_stm32h7xx.c \
             drivers/bus_i2c_hal.c \
-            drivers/bus_i2c_hal_init.c \
             drivers/pwm_output_dshot_hal.c \
             drivers/pwm_output_dshot_shared.c \
             drivers/persistent.c \

@@ -236,10 +236,8 @@ static bool trampCmsInitSettings(void)
     return true;
 }
 
-static const void *trampCmsOnEnter(displayPort_t *pDisp)
+static const void *trampCmsOnEnter(void)
 {
-    UNUSED(pDisp);
-
     if (!trampCmsInitSettings()) {
         return MENU_CHAIN_BACK;
     }
@@ -250,7 +248,7 @@ static const void *trampCmsOnEnter(displayPort_t *pDisp)
 static const OSD_Entry trampCmsMenuCommenceEntries[] = {
     { "CONFIRM", OME_Label,   NULL,          NULL, 0 },
     { "YES",     OME_Funcall, trampCmsCommence, NULL, 0 },
-    { "NO",    OME_Back, NULL, NULL, 0 },
+    { "BACK",    OME_Back, NULL, NULL, 0 },
     { NULL,      OME_END, NULL, NULL, 0 }
 };
 

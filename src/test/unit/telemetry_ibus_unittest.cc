@@ -154,10 +154,10 @@ static bool portIsShared = false;
 static bool openSerial_called = false;
 static bool telemetryDetermineEnabledState_stub_retval;
 
-void rescheduleTask(taskId_e taskId, timeDelta_t newPeriodUs)
+void rescheduleTask(cfTaskId_e taskId, uint32_t newPeriodMicros)
 {
     EXPECT_EQ(TASK_TELEMETRY, taskId);
-    EXPECT_EQ(1000, newPeriodUs);
+    EXPECT_EQ(1000, newPeriodMicros);
 }
 
 

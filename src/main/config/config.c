@@ -18,6 +18,9 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+// temp for debugging
+#include "capstone_print.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -51,7 +54,6 @@
 #include "flight/imu.h"
 #include "flight/mixer.h"
 #include "flight/pid.h"
-#include "flight/pid_init.h"
 #include "flight/rpm_filter.h"
 #include "flight/servos.h"
 
@@ -60,8 +62,6 @@
 #include "io/ledstrip.h"
 #include "io/serial.h"
 #include "io/vtx.h"
-
-#include "msp/msp_box.h"
 
 #include "osd/osd.h"
 
@@ -102,11 +102,6 @@ pidProfile_t *currentPidProfile;
 #endif
 
 #define DYNAMIC_FILTER_MAX_SUPPORTED_LOOP_TIME HZ_TO_INTERVAL_US(2000)
-
-#define BETAFLIGHT_MAX_SRATE  100
-#define KISS_MAX_SRATE        100
-#define QUICK_MAX_RATE        200
-#define ACTUAL_MAX_RATE       200
 
 PG_REGISTER_WITH_RESET_TEMPLATE(pilotConfig_t, pilotConfig, PG_PILOT_CONFIG, 1);
 
@@ -163,6 +158,7 @@ void resetConfig(void)
 
 static void activateConfig(void)
 {
+/*
     schedulerOptimizeRate(systemConfig()->schedulerOptimizeRate == SCHEDULER_OPTIMIZE_RATE_ON || (systemConfig()->schedulerOptimizeRate == SCHEDULER_OPTIMIZE_RATE_AUTO && motorConfig()->dev.useDshotTelemetry));
     loadPidProfile();
     loadControlRateProfile();
@@ -186,19 +182,19 @@ static void activateConfig(void)
 #if defined(USE_LED_STRIP_STATUS_MODE)
     reevaluateLedConfig();
 #endif
-
-    initActiveBoxIds();
+*/
 }
-
+/*
 static void adjustFilterLimit(uint16_t *parm, uint16_t resetValue)
 {
     if (*parm > FILTER_FREQUENCY_MAX) {
         *parm = resetValue;
     }
 }
-
+*/
 static void validateAndFixConfig(void)
 {
+/*
 #if !defined(USE_QUAD_MIXER_ONLY)
     // Reset unsupported mixer mode to default.
     // This check will be gone when motor/servo mixers are loaded dynamically
@@ -268,12 +264,6 @@ static void validateAndFixConfig(void)
                 pidProfilesMutable(i)->d_min[axis] = 0;
             }
         }
-
-#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
-        if (batteryConfig()->voltageMeterSource != VOLTAGE_METER_ADC) {
-            pidProfilesMutable(i)->vbat_sag_compensation = 0;
-        }
-#endif
     }
 
     if (motorConfig()->dev.motorPwmProtocol == PWM_TYPE_BRUSHED) {
@@ -516,27 +506,30 @@ static void validateAndFixConfig(void)
 #endif
 #endif
 
-    bool configuredMotorProtocolDshot = false;
-    checkMotorProtocolEnabled(&motorConfig()->dev, &configuredMotorProtocolDshot);
 #if defined(USE_DSHOT)
+    bool usingDshotProtocol;
+    switch (motorConfig()->dev.motorPwmProtocol) {
+    case PWM_TYPE_PROSHOT1000:
+    case PWM_TYPE_DSHOT600:
+    case PWM_TYPE_DSHOT300:
+    case PWM_TYPE_DSHOT150:
+        usingDshotProtocol = true;
+        break;
+    default:
+        usingDshotProtocol = false;
+        break;
+    }
+
     // If using DSHOT protocol disable unsynched PWM as it's meaningless
-    if (configuredMotorProtocolDshot) {
+    if (usingDshotProtocol) {
         motorConfigMutable()->dev.useUnsyncedPwm = false;
     }
 
 #if defined(USE_DSHOT_TELEMETRY)
-    if ((!configuredMotorProtocolDshot || (motorConfig()->dev.useDshotBitbang == DSHOT_BITBANG_OFF && motorConfig()->dev.useBurstDshot == DSHOT_DMAR_ON) || systemConfig()->schedulerOptimizeRate == SCHEDULER_OPTIMIZE_RATE_OFF)
+    if ((!usingDshotProtocol || (motorConfig()->dev.useDshotBitbang == DSHOT_BITBANG_OFF && motorConfig()->dev.useBurstDshot == DSHOT_DMAR_ON) || systemConfig()->schedulerOptimizeRate == SCHEDULER_OPTIMIZE_RATE_OFF)
         && motorConfig()->dev.useDshotTelemetry) {
         motorConfigMutable()->dev.useDshotTelemetry = false;
     }
-
-#if defined(USE_DYN_IDLE)
-    if (!isRpmFilterEnabled()) {
-        for (unsigned i = 0; i < PID_PROFILE_COUNT; i++) {
-            pidProfilesMutable(i)->idle_min_rpm = 0;
-        }
-    }
-#endif // USE_DYN_IDLE
 #endif // USE_DSHOT_TELEMETRY
 #endif // USE_DSHOT
 
@@ -570,6 +563,7 @@ static void validateAndFixConfig(void)
 #if defined(TARGET_VALIDATECONFIG)
     targetValidateConfiguration();
 #endif
+<<<<<<< HEAD
 
     for (unsigned i = 0; i < CONTROL_RATE_PROFILE_COUNT; i++) {
         switch (controlRateProfilesMutable(i)->rates_type) {
@@ -609,8 +603,11 @@ static void validateAndFixConfig(void)
 #endif
 
     validateAndfixMotorOutputReordering(motorConfigMutable()->dev.motorOutputReordering, MAX_SUPPORTED_MOTORS);
+=======
+*/
+>>>>>>> 88a5996bb... added riscv
 }
-
+/*
 void validateAndFixGyroConfig(void)
 {
     // Fix gyro filter settings to handle cases where an older configurator was used that
@@ -636,56 +633,56 @@ void validateAndFixGyroConfig(void)
     }
 #endif
 
-    if (gyro.sampleRateHz > 0) {
-        float samplingTime = 1.0f / gyro.sampleRateHz;
+    float samplingTime;
+    switch (gyroMpuDetectionResult()->sensor) {
+    case ICM_20649_SPI:
+        samplingTime = 1.0f / 9000.0f;
+        break;
+    case BMI_160_SPI:
+        samplingTime = 0.0003125f;
+        break;
+    default:
+        samplingTime = 0.000125f;
+        break;
+    }
 
-        // check for looptime restrictions based on motor protocol. Motor times have safety margin
-        float motorUpdateRestriction;
-        switch (motorConfig()->dev.motorPwmProtocol) {
-        case PWM_TYPE_STANDARD:
-                motorUpdateRestriction = 1.0f / BRUSHLESS_MOTORS_PWM_RATE;
-                break;
-        case PWM_TYPE_ONESHOT125:
-                motorUpdateRestriction = 0.0005f;
-                break;
-        case PWM_TYPE_ONESHOT42:
-                motorUpdateRestriction = 0.0001f;
-                break;
-#ifdef USE_DSHOT
-        case PWM_TYPE_DSHOT150:
-                motorUpdateRestriction = 0.000250f;
-                break;
-        case PWM_TYPE_DSHOT300:
-                motorUpdateRestriction = 0.0001f;
-                break;
-#endif
-        default:
-            motorUpdateRestriction = 0.00003125f;
+
+    // check for looptime restrictions based on motor protocol. Motor times have safety margin
+    float motorUpdateRestriction;
+    switch (motorConfig()->dev.motorPwmProtocol) {
+    case PWM_TYPE_STANDARD:
+            motorUpdateRestriction = 1.0f / BRUSHLESS_MOTORS_PWM_RATE;
             break;
-        }
+    case PWM_TYPE_ONESHOT125:
+            motorUpdateRestriction = 0.0005f;
+            break;
+    case PWM_TYPE_ONESHOT42:
+            motorUpdateRestriction = 0.0001f;
+            break;
+#ifdef USE_DSHOT
+    case PWM_TYPE_DSHOT150:
+            motorUpdateRestriction = 0.000250f;
+            break;
+    case PWM_TYPE_DSHOT300:
+            motorUpdateRestriction = 0.0001f;
+            break;
+#endif
+    default:
+        motorUpdateRestriction = 0.00003125f;
+        break;
+    }
 
-        if (motorConfig()->dev.useUnsyncedPwm) {
-            bool configuredMotorProtocolDshot = false;
-            checkMotorProtocolEnabled(&motorConfig()->dev, &configuredMotorProtocolDshot);
-            // Prevent overriding the max rate of motors
-            if (!configuredMotorProtocolDshot && motorConfig()->dev.motorPwmProtocol != PWM_TYPE_STANDARD) {
-                const uint32_t maxEscRate = lrintf(1.0f / motorUpdateRestriction);
-                motorConfigMutable()->dev.motorPwmRate = MIN(motorConfig()->dev.motorPwmRate, maxEscRate);
-            }
-        } else {
-            const float pidLooptime = samplingTime * pidConfig()->pid_process_denom;
-            if (motorConfig()->dev.useDshotTelemetry) {
-                motorUpdateRestriction *= 2;
-            }
-            if (pidLooptime < motorUpdateRestriction) {
-                uint8_t minPidProcessDenom = motorUpdateRestriction / samplingTime;
-                if (motorUpdateRestriction / samplingTime > minPidProcessDenom) {
-                    // if any fractional part then round up
-                    minPidProcessDenom++;
-                }
-                minPidProcessDenom = constrain(minPidProcessDenom, 1, MAX_PID_PROCESS_DENOM);
-                pidConfigMutable()->pid_process_denom = MAX(pidConfigMutable()->pid_process_denom, minPidProcessDenom);
-            }
+    if (motorConfig()->dev.useUnsyncedPwm) {
+        // Prevent overriding the max rate of motors
+        if ((motorConfig()->dev.motorPwmProtocol <= PWM_TYPE_BRUSHED) && (motorConfig()->dev.motorPwmProtocol != PWM_TYPE_STANDARD)) {
+            const uint32_t maxEscRate = lrintf(1.0f / motorUpdateRestriction);
+            motorConfigMutable()->dev.motorPwmRate = MIN(motorConfig()->dev.motorPwmRate, maxEscRate);
+        }
+    } else {
+        const float pidLooptime = samplingTime * pidConfig()->pid_process_denom;
+        if (pidLooptime < motorUpdateRestriction) {
+            const uint8_t minPidProcessDenom = constrain(motorUpdateRestriction / samplingTime, 1, MAX_PID_PROCESS_DENOM);
+            pidConfigMutable()->pid_process_denom = MAX(pidConfigMutable()->pid_process_denom, minPidProcessDenom);
         }
     }
 
@@ -724,17 +721,19 @@ void validateAndFixGyroConfig(void)
     }
     loadPidProfile();
 }
-
+*/
 bool readEEPROM(void)
 {
     suspendRxPwmPpmSignal();
 
     // Sanity check, read flash
     bool success = loadEEPROM();
-
+	print_my_msg("loadEEPROM", __FUNCTION__,__FILE__,__LINE__);
+	printf("Hello, World ! success is true if [%d = 1] is true \n",success);
     featureInit();
 
     validateAndFixConfig();
+
 
     activateConfig();
 
@@ -746,12 +745,16 @@ bool readEEPROM(void)
 void writeUnmodifiedConfigToEEPROM(void)
 {
     validateAndFixConfig();
+    print_my_msg("Validate and Fix Config - successful", __FUNCTION__,__FILE__,__LINE__);
 
     suspendRxPwmPpmSignal();
+    print_my_msg("Suspended PWM/PPM Signals - successful", __FUNCTION__,__FILE__,__LINE__);
 
     writeConfigToEEPROM();
+    print_my_msg("Write Unmodified Config to EEPROM - successful", __FUNCTION__,__FILE__,__LINE__);
 
     resumeRxPwmPpmSignal();
+    print_my_msg("Resumed PWM/PPM Signals - successful", __FUNCTION__,__FILE__,__LINE__);
     configIsDirty = false;
 }
 
@@ -785,9 +788,11 @@ bool resetEEPROM(bool useCustomDefaults)
 void ensureEEPROMStructureIsValid(void)
 {
     if (isEEPROMStructureValid()) {
+        print_my_msg("EEPROM Structure Valid - successful", __FUNCTION__,__FILE__,__LINE__);
         return;
     }
     resetEEPROM(false);
+    print_my_msg("Reset EEPROM Complete - successful", __FUNCTION__,__FILE__,__LINE__);
 }
 
 void saveConfigAndNotify(void)
@@ -840,7 +845,6 @@ void changePidProfile(uint8_t pidProfileIndex)
 
         pidInit(currentPidProfile);
         initEscEndpoints();
-        mixerInitProfile();
     }
 
     beeperConfirmationBeeps(pidProfileIndex + 1);
@@ -861,3 +865,4 @@ bool getRebootRequired(void)
 {
     return rebootRequired;
 }
+
