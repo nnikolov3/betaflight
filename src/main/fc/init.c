@@ -96,7 +96,6 @@
 #include "flight/mixer.h"
 #include "flight/pid.h"
 #include "flight/pid_init.h"
-#include "flight/rpm_filter.h"
 #include "flight/servos.h"
 
 #include "io/asyncfatfs/asyncfatfs.h"
@@ -957,8 +956,7 @@ void init(void)
 #if defined(USE_MAX7456)
         case OSD_DISPLAYPORT_DEVICE_MAX7456:
             // If there is a max7456 chip for the OSD configured and detectd then use it.
-            osdDisplayPort = max7456DisplayPortInit(vcdProfile());
-            if (osdDisplayPort || device == OSD_DISPLAYPORT_DEVICE_MAX7456) {
+            if (max7456DisplayPortInit(vcdProfile(), &osdDisplayPort) || device == OSD_DISPLAYPORT_DEVICE_MAX7456) {
                 osdDisplayPortDevice = OSD_DISPLAYPORT_DEVICE_MAX7456;
                 break;
             }
@@ -984,6 +982,10 @@ void init(void)
 
         // osdInit will register with CMS by itself.
         osdInit(osdDisplayPort, osdDisplayPortDevice);
+
+        if (osdDisplayPortDevice == OSD_DISPLAYPORT_DEVICE_NONE) {
+            featureDisableImmediate(FEATURE_OSD);
+        }
     }
 #endif // USE_OSD
 
