@@ -50,36 +50,23 @@
 // 2 - time spent in scheduler
 // 3 - time spent executing check function
 
-<<<<<<< HEAD
-static FAST_DATA_ZERO_INIT task_t *currentTask = NULL;
-=======
 static FAST_RAM_ZERO_INIT cfTask_t *currentTask = NULL;
->>>>>>> 88a5996bb... added riscv
 
-static FAST_DATA_ZERO_INIT uint32_t totalWaitingTasks;
-static FAST_DATA_ZERO_INIT uint32_t totalWaitingTasksSamples;
+static FAST_RAM_ZERO_INIT uint32_t totalWaitingTasks;
+static FAST_RAM_ZERO_INIT uint32_t totalWaitingTasksSamples;
 
-static FAST_DATA_ZERO_INIT bool calculateTaskStatistics;
-FAST_DATA_ZERO_INIT uint16_t averageSystemLoadPercent = 0;
+static FAST_RAM_ZERO_INIT bool calculateTaskStatistics;
+FAST_RAM_ZERO_INIT uint16_t averageSystemLoadPercent = 0;
 
-static FAST_DATA_ZERO_INIT int taskQueuePos = 0;
-STATIC_UNIT_TESTED FAST_DATA_ZERO_INIT int taskQueueSize = 0;
+static FAST_RAM_ZERO_INIT int taskQueuePos = 0;
+STATIC_UNIT_TESTED FAST_RAM_ZERO_INIT int taskQueueSize = 0;
 
-<<<<<<< HEAD
-static FAST_DATA int periodCalculationBasisOffset = offsetof(task_t, lastExecutedAtUs);
-static FAST_DATA_ZERO_INIT bool gyroEnabled;
-
-// No need for a linked list for the queue, since items are only inserted at startup
-
-STATIC_UNIT_TESTED FAST_DATA_ZERO_INIT task_t* taskQueueArray[TASK_COUNT + 1]; // extra item for NULL pointer at end of queue
-=======
 static FAST_RAM int periodCalculationBasisOffset = offsetof(cfTask_t, lastExecutedAt);
 static FAST_RAM_ZERO_INIT bool gyroEnabled;
 
 // No need for a linked list for the queue, since items are only inserted at startup
 
 STATIC_UNIT_TESTED FAST_RAM_ZERO_INIT cfTask_t* taskQueueArray[TASK_COUNT + 1]; // extra item for NULL pointer at end of queue
->>>>>>> 88a5996bb... added riscv
 
 void queueClear(void)
 {

@@ -42,9 +42,7 @@
 voltageMeterSource_e batteryConfig_voltageMeterSource;
 currentMeterSource_e batteryConfig_currentMeterSource;
 
-uint16_t batteryConfig_vbatmincellvoltage;
 uint16_t batteryConfig_vbatmaxcellvoltage;
-uint16_t batteryConfig_vbatwarningcellvoltage;
 
 uint8_t voltageSensorADCConfig_vbatscale;
 
@@ -61,9 +59,7 @@ static const void *cmsx_Power_onEnter(void)
     batteryConfig_voltageMeterSource = batteryConfig()->voltageMeterSource;
     batteryConfig_currentMeterSource = batteryConfig()->currentMeterSource;
 
-    batteryConfig_vbatmincellvoltage = batteryConfig()->vbatmincellvoltage;
     batteryConfig_vbatmaxcellvoltage = batteryConfig()->vbatmaxcellvoltage;
-    batteryConfig_vbatwarningcellvoltage = batteryConfig()->vbatwarningcellvoltage;
 
     voltageSensorADCConfig_vbatscale = voltageSensorADCConfig(0)->vbatscale;
 
@@ -85,9 +81,7 @@ static const void *cmsx_Power_onExit(const OSD_Entry *self)
     batteryConfigMutable()->voltageMeterSource = batteryConfig_voltageMeterSource;
     batteryConfigMutable()->currentMeterSource = batteryConfig_currentMeterSource;
 
-    batteryConfigMutable()->vbatmincellvoltage = batteryConfig_vbatmincellvoltage;
     batteryConfigMutable()->vbatmaxcellvoltage = batteryConfig_vbatmaxcellvoltage;
-    batteryConfigMutable()->vbatwarningcellvoltage = batteryConfig_vbatwarningcellvoltage;
 
     voltageSensorADCConfigMutable(0)->vbatscale = voltageSensorADCConfig_vbatscale;
 
@@ -109,9 +103,7 @@ static const OSD_Entry cmsx_menuPowerEntries[] =
     { "V METER", OME_TAB, NULL, &(OSD_TAB_t){ &batteryConfig_voltageMeterSource, VOLTAGE_METER_COUNT - 1, voltageMeterSourceNames }, 0 },
     { "I METER", OME_TAB, NULL, &(OSD_TAB_t){ &batteryConfig_currentMeterSource, CURRENT_METER_COUNT - 1, currentMeterSourceNames }, 0 },
 
-    { "VBAT CLMIN", OME_UINT16, NULL, &(OSD_UINT16_t) { &batteryConfig_vbatmincellvoltage, VBAT_CELL_VOTAGE_RANGE_MIN, VBAT_CELL_VOTAGE_RANGE_MAX, 1 }, 0 },
     { "VBAT CLMAX", OME_UINT16, NULL, &(OSD_UINT16_t) { &batteryConfig_vbatmaxcellvoltage, VBAT_CELL_VOTAGE_RANGE_MIN, VBAT_CELL_VOTAGE_RANGE_MAX, 1 }, 0 },
-    { "VBAT CLWARN", OME_UINT16, NULL, &(OSD_UINT16_t) { &batteryConfig_vbatwarningcellvoltage, VBAT_CELL_VOTAGE_RANGE_MIN, VBAT_CELL_VOTAGE_RANGE_MAX, 1 }, 0 },
 
     { "VBAT SCALE", OME_UINT8, NULL, &(OSD_UINT8_t){ &voltageSensorADCConfig_vbatscale, VBAT_SCALE_MIN, VBAT_SCALE_MAX, 1 }, 0 },
 

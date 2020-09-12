@@ -89,8 +89,6 @@
 
 #include "config.h"
 
-#include "drivers/dshot.h"
-
 static bool configIsDirty; /* someone indicated that the config is modified and it is not yet saved */
 
 static bool rebootRequired = false;  // set if a config change requires a reboot to take effect
@@ -364,7 +362,7 @@ static void validateAndFixConfig(void)
 #endif
 
     if (
-        featureIsConfigured(FEATURE_3D) || !featureIsConfigured(FEATURE_GPS) || mixerModeIsFixedWing(mixerConfig()->mixerMode)
+        featureIsConfigured(FEATURE_3D) || !featureIsConfigured(FEATURE_GPS)
 #if !defined(USE_GPS) || !defined(USE_GPS_RESCUE)
         || true
 #endif
@@ -563,49 +561,7 @@ static void validateAndFixConfig(void)
 #if defined(TARGET_VALIDATECONFIG)
     targetValidateConfiguration();
 #endif
-<<<<<<< HEAD
-
-    for (unsigned i = 0; i < CONTROL_RATE_PROFILE_COUNT; i++) {
-        switch (controlRateProfilesMutable(i)->rates_type) {
-        case RATES_TYPE_BETAFLIGHT:
-        default:
-            for (int axis = FD_ROLL; axis <= FD_YAW; axis++) {
-                controlRateProfilesMutable(i)->rates[axis] = constrain(controlRateProfilesMutable(i)->rates[axis], 0, BETAFLIGHT_MAX_SRATE);
-            }
-
-            break;
-        case RATES_TYPE_KISS:
-            for (int axis = FD_ROLL; axis <= FD_YAW; axis++) {
-                controlRateProfilesMutable(i)->rates[axis] = constrain(controlRateProfilesMutable(i)->rates[axis], 0, KISS_MAX_SRATE);
-            }
-
-            break;
-        case RATES_TYPE_ACTUAL:
-            for (int axis = FD_ROLL; axis <= FD_YAW; axis++) {
-                controlRateProfilesMutable(i)->rates[axis] = constrain(controlRateProfilesMutable(i)->rates[axis], 0, ACTUAL_MAX_RATE);
-            }
-
-            break;
-        case RATES_TYPE_QUICK:
-            for (int axis = FD_ROLL; axis <= FD_YAW; axis++) {
-                controlRateProfilesMutable(i)->rates[axis] = constrain(controlRateProfilesMutable(i)->rates[axis], 0, QUICK_MAX_RATE);
-            }
-        }
-    }
-
-#if defined(USE_RX_MSP_OVERRIDE)
-    for (int i = 0; i < MAX_MODE_ACTIVATION_CONDITION_COUNT; i++) {
-        const modeActivationCondition_t *mac = modeActivationConditions(i);
-        if (mac->modeId == BOXMSPOVERRIDE && ((1 << (mac->auxChannelIndex) & (rxConfig()->msp_override_channels_mask)))) {
-            rxConfigMutable()->msp_override_channels_mask &= ~(1 << (mac->auxChannelIndex + NON_AUX_CHANNEL_COUNT));
-        }
-    }
-#endif
-
-    validateAndfixMotorOutputReordering(motorConfigMutable()->dev.motorOutputReordering, MAX_SUPPORTED_MOTORS);
-=======
 */
->>>>>>> 88a5996bb... added riscv
 }
 /*
 void validateAndFixGyroConfig(void)

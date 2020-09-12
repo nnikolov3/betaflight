@@ -111,12 +111,6 @@ typedef enum {
     DEBUG_FF_INTERPOLATED,
     DEBUG_BLACKBOX_OUTPUT,
     DEBUG_GYRO_SAMPLE,
-<<<<<<< HEAD
-    DEBUG_RX_TIMING,
-    DEBUG_D_LPF,
-    DEBUG_VTX_TRAMP,
-=======
->>>>>>> 88a5996bb... added riscv
     DEBUG_COUNT
 } debugType_e;
 

@@ -81,7 +81,6 @@
 #include "common/printf.h"
 #include "common/typeconversion.h"
 #include "common/utils.h"
-#include "common/unit.h"
 
 #include "config/config.h"
 #include "config/feature.h"
@@ -242,7 +241,7 @@ static void renderOsdEscRpmOrFreq(getEscRpmOrFreqFnPtr escFnPtr, osdElementParms
 int osdConvertTemperatureToSelectedUnit(int tempInDegreesCelcius)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
+    case OSD_UNIT_IMPERIAL:
         return lrintf(((tempInDegreesCelcius * 9.0f) / 5) + 32);
     default:
         return tempInDegreesCelcius;
@@ -291,7 +290,7 @@ void osdFormatDistanceString(char *ptr, int distance, char leadingSymbol)
         *ptr++ = leadingSymbol;
     }
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
+    case OSD_UNIT_IMPERIAL:
         unitTransition = 5280;
         unitSymbol = SYM_FT;
         unitSymbolExtended = SYM_MILES;
@@ -453,7 +452,7 @@ static uint8_t osdGetDirectionSymbolFromHeading(int heading)
 int32_t osdGetMetersToSelectedUnit(int32_t meters)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
+    case OSD_UNIT_IMPERIAL:
         return (meters * 328) / 100; // Convert to feet / 100
     default:
         return meters;               // Already in metre / 100
@@ -466,7 +465,7 @@ int32_t osdGetMetersToSelectedUnit(int32_t meters)
 char osdGetMetersToSelectedUnitSymbol(void)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
+    case OSD_UNIT_IMPERIAL:
         return SYM_FT;
     default:
         return SYM_M;
@@ -480,8 +479,7 @@ char osdGetMetersToSelectedUnitSymbol(void)
 int32_t osdGetSpeedToSelectedUnit(int32_t value)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
-    case UNIT_BRITISH:
+    case OSD_UNIT_IMPERIAL:
         return CM_S_TO_MPH(value);
     default:
         return CM_S_TO_KM_H(value);
@@ -494,8 +492,7 @@ int32_t osdGetSpeedToSelectedUnit(int32_t value)
 char osdGetSpeedToSelectedUnitSymbol(void)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
-    case UNIT_BRITISH:
+    case OSD_UNIT_IMPERIAL:
         return SYM_MPH;
     default:
         return SYM_KPH;
@@ -505,7 +502,7 @@ char osdGetSpeedToSelectedUnitSymbol(void)
 char osdGetVarioToSelectedUnitSymbol(void)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
+    case OSD_UNIT_IMPERIAL:
         return SYM_FTPS;
     default:
         return SYM_MPS;
@@ -516,7 +513,7 @@ char osdGetVarioToSelectedUnitSymbol(void)
 char osdGetTemperatureSymbolForSelectedUnit(void)
 {
     switch (osdConfig()->units) {
-    case UNIT_IMPERIAL:
+    case OSD_UNIT_IMPERIAL:
         return SYM_F;
     default:
         return SYM_C;
@@ -704,7 +701,7 @@ static void osdElementCrashFlipArrow(osdElementParms_t *element)
 }
 #endif // USE_ACC
 
-static void osdElementCrosshairs(osdElementParms_t *element)
+static void osdBackgroundCrosshairs(osdElementParms_t *element)
 {
     element->buff[0] = SYM_AH_CENTER_LINE;
     element->buff[1] = SYM_AH_CENTER;
@@ -925,29 +922,6 @@ static void osdElementGpsSpeed(osdElementParms_t *element)
 {
     tfp_sprintf(element->buff, "%c%3d%c", SYM_SPEED, osdGetSpeedToSelectedUnit(gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.groundSpeed), osdGetSpeedToSelectedUnitSymbol());
 }
-<<<<<<< HEAD
-
-static void osdElementEfficiency(osdElementParms_t *element)
-{
-    int efficiency = 0;
-    if (sensors(SENSOR_GPS) && ARMING_FLAG(ARMED) && STATE(GPS_FIX) && gpsSol.groundSpeed >= EFFICIENCY_MINIMUM_SPEED_CM_S) {
-        const int speedX100 = osdGetSpeedToSelectedUnit(gpsSol.groundSpeed * 100); // speed * 100 for improved resolution at slow speeds
-        
-        if (speedX100 > 0) {
-            const int mAmperage = getAmperage() * 10; // Current in mA
-            efficiency = mAmperage * 100 / speedX100; // mAmperage * 100 to cancel out speed * 100 from above
-        }
-    }
-
-    const char unitSymbol = osdConfig()->units == UNIT_IMPERIAL ? SYM_MILES : SYM_KM;
-    if (efficiency > 0 && efficiency <= 9999) {
-        tfp_sprintf(element->buff, "%4d%c/%c", efficiency, SYM_MAH, unitSymbol);
-    } else {
-        tfp_sprintf(element->buff, "----%c/%c", SYM_MAH, unitSymbol);
-    }
-}
-=======
->>>>>>> 88a5996bb... added riscv
 #endif // USE_GPS
 
 static void osdBackgroundHorizonSidebars(osdElementParms_t *element)
@@ -1052,7 +1026,7 @@ static void osdElementMotorDiagnostics(osdElementParms_t *element)
     const bool motorsRunning = areMotorsRunning();
     for (; i < getMotorCount(); i++) {
         if (motorsRunning) {
-            element->buff[i] =  0x88 - scaleRange(motor[i], getMotorOutputLow(), getMotorOutputHigh(), 0, 8);
+            element->buff[i] =  0x88 - scaleRange(motor[i], motorOutputLow, motorOutputHigh, 0, 8);
         } else {
             element->buff[i] =  0x88;
         }
@@ -1624,7 +1598,7 @@ const osdElementDrawFn osdElementDrawFunction[OSD_ITEM_COUNT] = {
     [OSD_CAMERA_FRAME]            = NULL,  // only has background. Added first so it's the lowest "layer" and doesn't cover other elements
     [OSD_RSSI_VALUE]              = osdElementRssi,
     [OSD_MAIN_BATT_VOLTAGE]       = osdElementMainBatteryVoltage,
-    [OSD_CROSSHAIRS]              = osdElementCrosshairs,  // only has background, but needs to be over other elements (like artificial horizon)
+    [OSD_CROSSHAIRS]              = NULL,  // only has background
 #ifdef USE_ACC
     [OSD_ARTIFICIAL_HORIZON]      = osdElementArtificialHorizon,
 #endif
@@ -1730,6 +1704,7 @@ const osdElementDrawFn osdElementDrawFunction[OSD_ITEM_COUNT] = {
 
 const osdElementDrawFn osdElementBackgroundFunction[OSD_ITEM_COUNT] = {
     [OSD_CAMERA_FRAME]            = osdBackgroundCameraFrame,
+    [OSD_CROSSHAIRS]              = osdBackgroundCrosshairs,
     [OSD_HORIZON_SIDEBARS]        = osdBackgroundHorizonSidebars,
     [OSD_CRAFT_NAME]              = osdBackgroundCraftName,
 #ifdef USE_OSD_STICK_OVERLAY

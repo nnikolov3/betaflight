@@ -97,7 +97,7 @@ static int srxlHeartbeat(displayPort_t *displayPort)
     return 0;
 }
 
-static void srxlRedraw(displayPort_t *displayPort)
+static void srxlResync(displayPort_t *displayPort)
 {
     UNUSED(displayPort);
 }
@@ -130,7 +130,7 @@ static const displayPortVTable_t srxlVTable = {
     .writeChar = srxlWriteChar,
     .isTransferInProgress = srxlIsTransferInProgress,
     .heartbeat = srxlHeartbeat,
-    .redraw = srxlRedraw,
+    .resync = srxlResync,
     .isSynced = srxlIsSynced,
     .txBytesFree = srxlTxBytesFree,
     .layerSupported = NULL,

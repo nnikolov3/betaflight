@@ -461,8 +461,6 @@ void batteryUpdateCurrentMeter(timeUs_t currentTimeUs)
     }
 }
 
-<<<<<<< HEAD
-=======
 float calculateVbatPidCompensation(void) {
     float batteryScaler =  1.0f;
     if (batteryConfig()->voltageMeterSource != VOLTAGE_METER_NONE && batteryCellCount > 0) {
@@ -472,7 +470,6 @@ float calculateVbatPidCompensation(void) {
     return batteryScaler;
 }
 
->>>>>>> 88a5996bb... added riscv
 uint8_t calculateBatteryPercentageRemaining(void)
 {
     uint8_t batteryPercentage = 0;

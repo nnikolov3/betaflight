@@ -25,4 +25,4 @@
 #include "pg/displayport_profiles.h"
 
 struct vcdProfile_s;
-bool max7456DisplayPortInit(const struct vcdProfile_s *vcdProfile, displayPort_t **displayPort);
+displayPort_t *max7456DisplayPortInit(const struct vcdProfile_s *vcdProfile);

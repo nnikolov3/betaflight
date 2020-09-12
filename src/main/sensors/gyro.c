@@ -86,19 +86,13 @@
 #define USE_GYRO_SLEW_LIMITER
 #endif
 
-<<<<<<< HEAD
-FAST_DATA_ZERO_INIT gyro_t gyro;
-
-static FAST_DATA_ZERO_INIT bool overflowDetected;
-=======
 FAST_RAM_ZERO_INIT gyro_t gyro;
 static FAST_RAM_ZERO_INIT uint8_t gyroDebugMode;
 
 static FAST_RAM_ZERO_INIT uint8_t gyroToUse;
 static FAST_RAM_ZERO_INIT bool overflowDetected;
->>>>>>> 88a5996bb... added riscv
 #ifdef USE_GYRO_OVERFLOW_CHECK
-static FAST_DATA_ZERO_INIT timeUs_t overflowTimeUs;
+static FAST_RAM_ZERO_INIT timeUs_t overflowTimeUs;
 #endif
 
 #ifdef USE_GYRO_OVERFLOW_CHECK
@@ -106,27 +100,23 @@ static FAST_RAM_ZERO_INIT uint8_t overflowAxisMask;
 #endif
 
 #ifdef USE_YAW_SPIN_RECOVERY
-static FAST_DATA_ZERO_INIT bool yawSpinRecoveryEnabled;
-static FAST_DATA_ZERO_INIT int yawSpinRecoveryThreshold;
-static FAST_DATA_ZERO_INIT bool yawSpinDetected;
-static FAST_DATA_ZERO_INIT timeUs_t yawSpinTimeUs;
+static FAST_RAM_ZERO_INIT bool yawSpinRecoveryEnabled;
+static FAST_RAM_ZERO_INIT int yawSpinRecoveryThreshold;
+static FAST_RAM_ZERO_INIT bool yawSpinDetected;
+static FAST_RAM_ZERO_INIT timeUs_t yawSpinTimeUs;
 #endif
 
-static FAST_DATA_ZERO_INIT float accumulatedMeasurements[XYZ_AXIS_COUNT];
-static FAST_DATA_ZERO_INIT float gyroPrevious[XYZ_AXIS_COUNT];
-static FAST_DATA_ZERO_INIT int accumulatedMeasurementCount;
+static FAST_RAM_ZERO_INIT float accumulatedMeasurements[XYZ_AXIS_COUNT];
+static FAST_RAM_ZERO_INIT float gyroPrevious[XYZ_AXIS_COUNT];
+static FAST_RAM_ZERO_INIT int accumulatedMeasurementCount;
 
-static FAST_DATA_ZERO_INIT int16_t gyroSensorTemperature;
+static FAST_RAM_ZERO_INIT int16_t gyroSensorTemperature;
 
-<<<<<<< HEAD
-FAST_DATA uint8_t activePidLoopDenom = 1;
-=======
 static bool gyroHasOverflowProtection = true;
 
 static FAST_RAM_ZERO_INIT bool useDualGyroDebugging;
 static FAST_RAM_ZERO_INIT flight_dynamics_index_t gyroDebugAxis;
 FAST_RAM uint8_t activePidLoopDenom = 1;
->>>>>>> 88a5996bb... added riscv
 
 typedef struct gyroCalibration_s {
     float sum[XYZ_AXIS_COUNT];
@@ -201,7 +191,6 @@ void pgResetFn_gyroConfig(gyroConfig_t *gyroConfig)
     gyroConfig->dyn_notch_q = 120;
     gyroConfig->dyn_notch_min_hz = 150;
     gyroConfig->gyro_filter_debug_axis = FD_ROLL;
-    gyroConfig->dyn_lpf_curve_expo = 0;
 }
 
 #ifdef USE_MULTI_GYRO
@@ -1305,21 +1294,10 @@ float dynThrottle(float throttle) {
 
 void dynLpfGyroUpdate(float throttle)
 {
-<<<<<<< HEAD
-    if (gyro.dynLpfFilter != DYN_LPF_NONE) {
-        unsigned int cutoffFreq;
-        if (gyro.dynLpfCurveExpo > 0) {
-            cutoffFreq = dynLpfCutoffFreq(throttle, gyro.dynLpfMin, gyro.dynLpfMax, gyro.dynLpfCurveExpo);
-        } else {
-            cutoffFreq = fmax(dynThrottle(throttle) * gyro.dynLpfMax, gyro.dynLpfMin);
-        }
-        if (gyro.dynLpfFilter == DYN_LPF_PT1) {
-=======
     if (dynLpfFilter != DYN_LPF_NONE) {
         const unsigned int cutoffFreq = fmax(dynThrottle(throttle) * dynLpfMax, dynLpfMin);
 
         if (dynLpfFilter == DYN_LPF_PT1) {
->>>>>>> 88a5996bb... added riscv
             DEBUG_SET(DEBUG_DYN_LPF, 2, cutoffFreq);
             const float gyroDt = gyro.targetLooptime * 1e-6f;
             for (int axis = 0; axis < XYZ_AXIS_COUNT; axis++) {

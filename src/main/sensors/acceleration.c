@@ -85,7 +85,7 @@
 
 #define CALIBRATING_ACC_CYCLES              400
 
-FAST_DATA_ZERO_INIT acc_t acc;                       // acc access functions
+FAST_RAM_ZERO_INIT acc_t acc;                       // acc access functions
 
 void resetRollAndPitchTrims(rollAndPitchTrims_t *rollAndPitchTrims)
 {

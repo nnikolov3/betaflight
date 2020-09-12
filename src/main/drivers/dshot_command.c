@@ -151,32 +151,6 @@ static bool allMotorsAreIdle(void)
     return true;
 }
 
-<<<<<<< HEAD
-bool dshotStreamingCommandsAreEnabled(void)
-{
-    return motorIsEnabled() && motorGetMotorEnableTimeMs() && millis() > motorGetMotorEnableTimeMs() + DSHOT_PROTOCOL_DETECTION_DELAY_MS;
-}
-
-static bool dshotCommandsAreEnabled(dshotCommandType_e commandType)
-{
-    bool ret = false;
-
-    switch (commandType) {
-    case DSHOT_CMD_TYPE_BLOCKING:
-        ret = !motorIsEnabled();
-
-        break;
-    case DSHOT_CMD_TYPE_INLINE:
-        ret = dshotStreamingCommandsAreEnabled();
-
-        break;
-    default:
-
-        break;
-    }
-
-    return ret;
-=======
 bool dshotCommandsAreEnabled(void)
 {
     if (motorIsEnabled() && motorGetMotorEnableTimeMs() && millis() > motorGetMotorEnableTimeMs() + DSHOT_PROTOCOL_DETECTION_DELAY_MS) {
@@ -184,7 +158,6 @@ bool dshotCommandsAreEnabled(void)
     } else {
         return false;
     }
->>>>>>> 88a5996bb... added riscv
 }
 
 void dshotCommandWrite(uint8_t index, uint8_t motorCount, uint8_t command, bool blocking)

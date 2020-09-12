@@ -135,12 +135,7 @@ STATIC_UNIT_TESTED bool rxSpiSetProtocol(rx_spi_protocol_e protocol)
 #if defined(USE_RX_FRSKY_SPI_X)
     case RX_SPI_FRSKY_X:
     case RX_SPI_FRSKY_X_LBT:
-<<<<<<< HEAD
-    case RX_SPI_FRSKY_X_V2:
-    case RX_SPI_FRSKY_X_LBT_V2:
-=======
 #endif
->>>>>>> 88a5996bb... added riscv
         protocolInit = frSkySpiInit;
         protocolDataReceived = frSkySpiDataReceived;
         protocolSetRcDataFromPayload = frSkySpiSetRcData;

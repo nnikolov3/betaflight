@@ -27,7 +27,16 @@
 #define VTX_TRAMP_MIN_FREQUENCY_MHZ 5000             //min freq in MHz
 #define VTX_TRAMP_MAX_FREQUENCY_MHZ 5999             //max freq in MHz
 
-bool vtxTrampInit(void);
+extern uint8_t trampBand;
+extern uint8_t trampChannel;
+extern uint16_t trampPower;       // Actual transmitting power
+extern uint8_t trampPitMode;
+extern uint32_t trampCurFreq;
+extern uint16_t trampConfiguredPower; // Configured transmitting power
+extern int16_t trampTemperature;
 
-uint16_t vtxTrampGetCurrentActualPower();
-uint16_t vtxTrampGetCurrentTemp();
+bool vtxTrampInit(void);
+bool trampCommitChanges(void);
+void trampSetPitMode(uint8_t onoff);
+void trampSetBandAndChannel(uint8_t band, uint8_t channel);
+void trampSetRFPower(uint16_t level);

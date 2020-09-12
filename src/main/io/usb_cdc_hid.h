@@ -21,4 +21,3 @@
 #pragma once
 
 void sendRcDataToHid(void);
-bool cdcDeviceIsMayBeActive();

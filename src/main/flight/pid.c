@@ -75,20 +75,6 @@ const char pidNames[] =
     "LEVEL;"
     "MAG;";
 
-<<<<<<< HEAD
-FAST_DATA_ZERO_INIT uint32_t targetPidLooptime;
-FAST_DATA_ZERO_INIT pidAxisData_t pidData[XYZ_AXIS_COUNT];
-FAST_DATA_ZERO_INIT pidRuntime_t pidRuntime;
-
-#if defined(USE_ABSOLUTE_CONTROL)
-STATIC_UNIT_TESTED FAST_DATA_ZERO_INIT float axisError[XYZ_AXIS_COUNT];
-#endif
-
-#if defined(USE_THROTTLE_BOOST)
-FAST_DATA_ZERO_INIT float throttleBoost;
-pt1Filter_t throttleLpf;
-#endif
-=======
 FAST_RAM_ZERO_INIT uint32_t targetPidLooptime;
 FAST_RAM_ZERO_INIT pidAxisData_t pidData[XYZ_AXIS_COUNT];
 
@@ -105,7 +91,6 @@ static FAST_RAM_ZERO_INIT uint16_t itermAcceleratorGain;
 static FAST_RAM_ZERO_INIT float antiGravityOsdCutoff;
 static FAST_RAM_ZERO_INIT bool antiGravityEnabled;
 static FAST_RAM_ZERO_INIT bool zeroThrottleItermReset;
->>>>>>> 88a5996bb... added riscv
 
 PG_REGISTER_WITH_RESET_TEMPLATE(pidConfig_t, pidConfig, PG_PID_CONFIG, 2);
 
@@ -169,6 +154,7 @@ void resetPidProfile(pidProfile_t *pidProfile)
         .dterm_notch_hz = 0,
         .dterm_notch_cutoff = 0,
         .itermWindupPointPercent = 100,
+        .vbatPidCompensation = 0,
         .pidAtMinThrottle = PID_STABILISATION_ON,
         .levelAngleLimit = 55,
         .feedForwardTransition = 0,
@@ -253,12 +239,6 @@ void pgResetFn_pidProfiles(pidProfile_t *pidProfiles)
     }
 }
 
-<<<<<<< HEAD
-// Scale factors to make best use of range with D_LPF debugging, aiming for max +/-16K as debug values are 16 bit
-#define D_LPF_RAW_SCALE 25
-#define D_LPF_FILT_SCALE 22
-
-=======
 static void pidSetTargetLooptime(uint32_t pidLooptime)
 {
     targetPidLooptime = pidLooptime;
@@ -270,7 +250,6 @@ static void pidSetTargetLooptime(uint32_t pidLooptime)
 }
 
 static FAST_RAM_ZERO_INIT float itermAccelerator;
->>>>>>> 88a5996bb... added riscv
 
 void pidSetItermAccelerator(float newItermAccelerator)
 {
@@ -803,15 +782,8 @@ void pidAcroTrainerInit(void)
 #ifdef USE_THRUST_LINEARIZATION
 float pidCompensateThrustLinearization(float throttle)
 {
-<<<<<<< HEAD
-    if (pidRuntime.thrustLinearization != 0.0f) {
-        // for whoops where a lot of TL is needed, allow more throttle boost
-        const float throttleReversed = (1.0f - throttle);
-        throttle /= 1.0f + pidRuntime.throttleCompensateAmount * powerf(throttleReversed, 2);
-=======
     if (thrustLinearization != 0.0f) {
         throttle = throttle * (throttle * thrustLinearization + 1.0f - thrustLinearization);
->>>>>>> 88a5996bb... added riscv
     }
     return throttle;
 }
@@ -820,13 +792,8 @@ float pidApplyThrustLinearization(float motorOutput)
 {
     if (thrustLinearization != 0.0f) {
         if (motorOutput > 0.0f) {
-<<<<<<< HEAD
-            const float motorOutputReversed = (1.0f - motorOutput);
-            motorOutput *= 1.0f + powerf(motorOutputReversed, 2) * pidRuntime.thrustLinearization;
-=======
             motorOutput = sqrtf(motorOutput * thrustLinearizationReciprocal +
                                 thrustLinearizationB * thrustLinearizationB) - thrustLinearizationB;
->>>>>>> 88a5996bb... added riscv
         }
     }
     return motorOutput;
@@ -1303,9 +1270,8 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, timeUs_t currentTim
 {
     static float previousGyroRateDterm[XYZ_AXIS_COUNT];
 #ifdef USE_INTERPOLATED_SP
-    static FAST_DATA_ZERO_INIT uint32_t lastFrameNumber;
+    static FAST_RAM_ZERO_INIT uint32_t lastFrameNumber;
 #endif
-    static float previousRawGyroRateDterm[XYZ_AXIS_COUNT];
 
 #if defined(USE_ACC)
     static timeUs_t levelModeStartTimeUs = 0;
@@ -1378,40 +1344,15 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, timeUs_t currentTim
     float gyroRateDterm[XYZ_AXIS_COUNT];
     for (int axis = FD_ROLL; axis <= FD_YAW; ++axis) {
         gyroRateDterm[axis] = gyro.gyroADCf[axis];
-<<<<<<< HEAD
-        // -----calculate raw, unfiltered D component
-
-        // Divide rate change by dT to get differential (ie dr/dt).
-        // dT is fixed and calculated from the target PID loop time
-        // This is done to avoid DTerm spikes that occur with dynamically
-        // calculated deltaT whenever another task causes the PID
-        // loop execution to be delayed.
-        const float delta =
-            - (gyroRateDterm[axis] - previousRawGyroRateDterm[axis]) * pidRuntime.pidFrequency / D_LPF_RAW_SCALE;
-        previousRawGyroRateDterm[axis] = gyroRateDterm[axis];
-
-        // Log the unfiltered D
-        if (axis == FD_ROLL) {
-            DEBUG_SET(DEBUG_D_LPF, 0, lrintf(delta));
-        } else if (axis == FD_PITCH) {
-            DEBUG_SET(DEBUG_D_LPF, 1, lrintf(delta));
-        }
-
-        gyroRateDterm[axis] = pidRuntime.dtermNotchApplyFn((filter_t *) &pidRuntime.dtermNotch[axis], gyroRateDterm[axis]);
-        gyroRateDterm[axis] = pidRuntime.dtermLowpassApplyFn((filter_t *) &pidRuntime.dtermLowpass[axis], gyroRateDterm[axis]);
-        gyroRateDterm[axis] = pidRuntime.dtermLowpass2ApplyFn((filter_t *) &pidRuntime.dtermLowpass2[axis], gyroRateDterm[axis]);
-=======
 #ifdef USE_RPM_FILTER
         gyroRateDterm[axis] = rpmFilterDterm(axis,gyroRateDterm[axis]);
 #endif
         gyroRateDterm[axis] = dtermNotchApplyFn((filter_t *) &dtermNotch[axis], gyroRateDterm[axis]);
         gyroRateDterm[axis] = dtermLowpassApplyFn((filter_t *) &dtermLowpass[axis], gyroRateDterm[axis]);
         gyroRateDterm[axis] = dtermLowpass2ApplyFn((filter_t *) &dtermLowpass2[axis], gyroRateDterm[axis]);
->>>>>>> 88a5996bb... added riscv
     }
 
     rotateItermAndAxisError();
-
 #ifdef USE_RPM_FILTER
     rpmFilterUpdate();
 #endif
@@ -1513,18 +1454,10 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, timeUs_t currentTim
 
         // -----calculate I component
 #ifdef USE_LAUNCH_CONTROL
-<<<<<<< HEAD
-        // if launch control is active override the iterm gains and apply iterm windup protection to all axes
-        if (launchControlActive) {
-            Ki = pidRuntime.launchControlKi;
-            axisDynCi = dynCi;
-        } else
-=======
         // if launch control is active override the iterm gains
         const float Ki = launchControlActive ? launchControlKi : pidCoefficient[axis].Ki;
 #else
         const float Ki = pidCoefficient[axis].Ki;
->>>>>>> 88a5996bb... added riscv
 #endif
         pidData[axis].I = constrainf(previousIterm + (Ki * dynCi + agGain) * itermErrorRate, -itermLimit, itermLimit);
 
@@ -1556,12 +1489,7 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, timeUs_t currentTim
             // calculated deltaT whenever another task causes the PID
             // loop execution to be delayed.
             const float delta =
-<<<<<<< HEAD
-                - (gyroRateDterm[axis] - previousGyroRateDterm[axis]) * pidRuntime.pidFrequency;
-            float preTpaData = pidRuntime.pidCoefficient[axis].Kd * delta;
-=======
                 - (gyroRateDterm[axis] - previousGyroRateDterm[axis]) * pidFrequency;
->>>>>>> 88a5996bb... added riscv
 
 #if defined(USE_ACC)
             if (cmpTimeUs(currentTimeUs, levelModeStartTimeUs) > CRASH_RECOVERY_DETECTION_DELAY_US) {
@@ -1569,19 +1497,12 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, timeUs_t currentTim
             }
 #endif
 
-#if defined(USE_D_MIN)
-<<<<<<< HEAD
             float dMinFactor = 1.0f;
-            if (pidRuntime.dMinPercent[axis] > 0) {
-                float dMinGyroFactor = biquadFilterApply(&pidRuntime.dMinRange[axis], delta);
-                dMinGyroFactor = fabsf(dMinGyroFactor) * pidRuntime.dMinGyroGain;
-                const float dMinSetpointFactor = (fabsf(pidSetpointDelta)) * pidRuntime.dMinSetpointGain;
-=======
+#if defined(USE_D_MIN)
             if (dMinPercent[axis] > 0) {
                 float dMinGyroFactor = biquadFilterApply(&dMinRange[axis], delta);
                 dMinGyroFactor = fabsf(dMinGyroFactor) * dMinGyroGain;
                 const float dMinSetpointFactor = (fabsf(pidSetpointDelta)) * dMinSetpointGain;
->>>>>>> 88a5996bb... added riscv
                 dMinFactor = MAX(dMinGyroFactor, dMinSetpointFactor);
                 dMinFactor = dMinPercent[axis] + (1.0f - dMinPercent[axis]) * dMinFactor;
                 dMinFactor = pt1FilterApply(&dMinLowpass[axis], dMinFactor);
@@ -1594,34 +1515,11 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, timeUs_t currentTim
                     DEBUG_SET(DEBUG_D_MIN, 3, lrintf(pidCoefficient[axis].Kd * dMinFactor * 10 / DTERM_SCALE));
                 }
             }
-
-            // Apply the dMinFactor
-            preTpaData *= dMinFactor;
 #endif
-<<<<<<< HEAD
-            pidData[axis].D = preTpaData * tpaFactor;
-
-            // Log the value of D pre application of TPA
-            preTpaData *= D_LPF_FILT_SCALE;
-
-            if (axis == FD_ROLL) {
-                DEBUG_SET(DEBUG_D_LPF, 2, lrintf(preTpaData));
-            } else if (axis == FD_PITCH) {
-                DEBUG_SET(DEBUG_D_LPF, 3, lrintf(preTpaData));
-            }
-=======
             pidData[axis].D = pidCoefficient[axis].Kd * delta * tpaFactor * dMinFactor;
->>>>>>> 88a5996bb... added riscv
         } else {
             pidData[axis].D = 0;
-
-            if (axis == FD_ROLL) {
-                DEBUG_SET(DEBUG_D_LPF, 2, 0);
-            } else if (axis == FD_PITCH) {
-                DEBUG_SET(DEBUG_D_LPF, 3, 0);
-            }
         }
-
         previousGyroRateDterm[axis] = gyroRateDterm[axis];
 
         // -----calculate feedforward component
@@ -1741,17 +1639,10 @@ bool pidAntiGravityEnabled(void)
 #ifdef USE_DYN_LPF
 void dynLpfDTermUpdate(float throttle)
 {
-<<<<<<< HEAD
-    unsigned int cutoffFreq;
-    if (pidRuntime.dynLpfFilter != DYN_LPF_NONE) {
-        if (pidRuntime.dynLpfCurveExpo > 0) {
-            cutoffFreq = dynLpfCutoffFreq(throttle, pidRuntime.dynLpfMin, pidRuntime.dynLpfMax, pidRuntime.dynLpfCurveExpo);
-=======
     static unsigned int cutoffFreq;
     if (dynLpfFilter != DYN_LPF_NONE) {
         if (dynLpfCurveExpo > 0) {
             cutoffFreq = dynDtermLpfCutoffFreq(throttle, dynLpfMin, dynLpfMax, dynLpfCurveExpo);
->>>>>>> 88a5996bb... added riscv
         } else {
             cutoffFreq = fmax(dynThrottle(throttle) * dynLpfMax, dynLpfMin);
         }
@@ -1769,7 +1660,7 @@ void dynLpfDTermUpdate(float throttle)
 }
 #endif
 
-float dynLpfCutoffFreq(float throttle, uint16_t dynLpfMin, uint16_t dynLpfMax, uint8_t expo) {
+float dynDtermLpfCutoffFreq(float throttle, uint16_t dynLpfMin, uint16_t dynLpfMax, uint8_t expo) {
     const float expof = expo / 10.0f;
     static float curve;
     curve = throttle * (1 - throttle) * expof + throttle;

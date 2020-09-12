@@ -67,27 +67,16 @@
 
 // For VISIBLE*
 #include "io/rcdevice_cam.h"
-#include "io/usb_cdc_hid.h"
 
-<<<<<<< HEAD
-#include "pg/pg.h"
-#include "pg/pg_ids.h"
-#include "pg/rx.h"
-
-=======
->>>>>>> 88a5996bb... added riscv
 #include "osd/osd.h"
 
 #include "rx/rx.h"
 
-<<<<<<< HEAD
-=======
 #ifdef USE_USB_CDC_HID
 #include "sensors/battery.h"
 #include "pg/usb.h"
 #endif
 
->>>>>>> 88a5996bb... added riscv
 // DisplayPort management
 
 #ifndef CMS_MAX_DEVICE
@@ -363,22 +352,6 @@ static void cmsPadToSize(char *buf, int size)
 #endif
 }
 
-<<<<<<< HEAD
-static int cmsDisplayWrite(displayPort_t *instance, uint8_t x, uint8_t y, uint8_t attr, const char *s)
-{
-    char buffer[strlen(s) + 1];
-    char* b = buffer;
-    while (*s) {
-        char c = toupper(*s++);
-        *b++ = (c < 0x20 || c > 0x5F) ? ' ' : c; // limit to alphanumeric and punctuation
-    }
-    *b++ = '\0';
-
-    return displayWrite(instance, x, y, attr, buffer);
-}
-
-=======
->>>>>>> 88a5996bb... added riscv
 static int cmsDrawMenuItemValue(displayPort_t *pDisplay, char *buff, uint8_t row, uint8_t maxSize)
 {
     int colpos;
@@ -555,9 +528,9 @@ static int cmsDrawMenuEntry(displayPort_t *pDisplay, const OSD_Entry *p, uint8_t
 #ifdef CMS_MENU_DEBUG
         // Shouldn't happen. Notify creator of this menu content
 #ifdef CMS_OSD_RIGHT_ALIGNED_VALUES
-        cnt = cmsDisplayWrite(pDisplay, rightMenuColumn - 6, row, DISPLAYPORT_ATTR_NONE, "BADENT");
+        cnt = displayWrite(pDisplay, rightMenuColumn - 6, row, DISPLAYPORT_ATTR_NONE, "BADENT");
 #else
-        cnt = cmsDisplayWrite(pDisplay, rightMenuColumn, row, DISPLAYPORT_ATTR_NONE, "BADENT");
+        cnt = displayWrite(pDisplay, rightMenuColumn, row, DISPLAYPORT_ATTR_NONE, "BADENT");
 #endif
 #endif
         break;
@@ -665,7 +638,7 @@ static void cmsDrawMenu(displayPort_t *pDisplay, uint32_t currentTimeUs)
 #endif
 
     if (pDisplay->cursorRow >= 0 && currentCtx.cursorRow != pDisplay->cursorRow) {
-        room -= cmsDisplayWrite(pDisplay, leftMenuColumn, top + pDisplay->cursorRow * linesPerMenuItem, DISPLAYPORT_ATTR_NONE, " ");
+        room -= displayWrite(pDisplay, leftMenuColumn, top + pDisplay->cursorRow * linesPerMenuItem, DISPLAYPORT_ATTR_NONE, " ");
     }
 
     if (room < 30) {
@@ -673,7 +646,7 @@ static void cmsDrawMenu(displayPort_t *pDisplay, uint32_t currentTimeUs)
     }
 
     if (pDisplay->cursorRow != currentCtx.cursorRow) {
-        room -= cmsDisplayWrite(pDisplay, leftMenuColumn, top + currentCtx.cursorRow * linesPerMenuItem, DISPLAYPORT_ATTR_NONE, ">");
+        room -= displayWrite(pDisplay, leftMenuColumn, top + currentCtx.cursorRow * linesPerMenuItem, DISPLAYPORT_ATTR_NONE, ">");
         pDisplay->cursorRow = currentCtx.cursorRow;
     }
 
@@ -802,10 +775,6 @@ void cmsMenuOpen(void)
         }
     }
     displayGrab(pCurrentDisplay); // grab the display for use by the CMS
-    // FIXME this should probably not have a dependency on the OSD or OSD slave code
-#ifdef USE_OSD
-    resumeRefreshAt = 0;
-#endif
 
     if ( pCurrentDisplay->cols < NORMAL_SCREEN_MIN_COLS) {
       smallScreen       = true;
@@ -883,10 +852,9 @@ const void *cmsMenuExit(displayPort_t *pDisplay, const void *ptr)
 
     if ((exitType == CMS_EXIT_SAVEREBOOT) || (exitType == CMS_POPUP_SAVEREBOOT) || (exitType == CMS_POPUP_EXITREBOOT)) {
         displayClearScreen(pDisplay);
-        cmsDisplayWrite(pDisplay, 5, 3, DISPLAYPORT_ATTR_NONE, "REBOOTING...");
+        displayWrite(pDisplay, 5, 3, DISPLAYPORT_ATTR_NONE, "REBOOTING...");
 
-        // Flush display
-        displayRedraw(pDisplay);
+        displayResync(pDisplay); // Was max7456RefreshAll(); why at this timing?
 
         stopMotors();
         motorShutdown();
@@ -1207,7 +1175,7 @@ static void cmsUpdate(uint32_t currentTimeUs)
         || rcdeviceInMenu
 #endif
 #ifdef USE_USB_CDC_HID
-        || cdcDeviceIsMayBeActive() // If this target is used as a joystick, we should leave here.
+        || (getBatteryCellCount() == 0 && usbDevConfig()->type == COMPOSITE)
 #endif
        ) {
         return;

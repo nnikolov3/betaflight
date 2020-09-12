@@ -143,7 +143,7 @@ enum {
 int16_t magHold;
 #endif
 
-static FAST_DATA_ZERO_INIT uint8_t pidUpdateCounter;
+static FAST_RAM_ZERO_INIT uint8_t pidUpdateCounter;
 
 static bool flipOverAfterCrashActive = false;
 
@@ -276,11 +276,7 @@ void updateArmingStatus(void)
             // We also need to prevent arming until it's possible to send DSHOT commands.
             // Otherwise if the initial arming is in crash-flip the motor direction commands
             // might not be sent.
-<<<<<<< HEAD
-            && (!isMotorProtocolDshot() || dshotStreamingCommandsAreEnabled())
-=======
             && dshotCommandsAreEnabled()
->>>>>>> 88a5996bb... added riscv
 #endif
         ) {
             // If so, unset the grace time arming disable flag
@@ -348,7 +344,7 @@ void updateArmingStatus(void)
 
 #ifdef USE_GPS_RESCUE
         if (gpsRescueIsConfigured()) {
-            if (gpsRescueConfig()->allowArmingWithoutFix || STATE(GPS_FIX) || ARMING_FLAG(WAS_EVER_ARMED) || IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
+            if (gpsRescueConfig()->allowArmingWithoutFix || STATE(GPS_FIX) || ARMING_FLAG(WAS_EVER_ARMED)) {
                 unsetArmingDisabled(ARMING_DISABLED_GPS);
             } else {
                 setArmingDisabled(ARMING_DISABLED_GPS);
@@ -433,9 +429,7 @@ void updateArmingStatus(void)
 void disarm(flightLogDisarmReason_e reason)
 {
     if (ARMING_FLAG(ARMED)) {
-        if (!flipOverAfterCrashActive) {
-            ENABLE_ARMING_FLAG(WAS_EVER_ARMED);
-        }
+        ENABLE_ARMING_FLAG(WAS_EVER_ARMED);
         DISABLE_ARMING_FLAG(ARMED);
         lastDisarmTimeUs = micros();
 
@@ -1179,7 +1173,7 @@ static FAST_CODE void subTaskMotorUpdate(timeUs_t currentTimeUs)
         startTime = micros();
     }
 
-    mixTable(currentTimeUs);
+    mixTable(currentTimeUs, currentPidProfile->vbatPidCompensation);
 
 #ifdef USE_SERVOS
     // motor outputs are used as sources for servo mixing, so motors must be calculated using mixTable() before servos.

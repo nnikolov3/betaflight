@@ -354,7 +354,6 @@ static uint8_t  cmsx_angleStrength;
 static uint8_t  cmsx_horizonStrength;
 static uint8_t  cmsx_horizonTransition;
 static uint8_t  cmsx_throttleBoost;
-static uint8_t  cmsx_thrustLinearization;
 static uint16_t cmsx_itermAcceleratorGain;
 static uint16_t cmsx_itermThrottleThreshold;
 static uint8_t  cmsx_motorOutputLimit;
@@ -393,7 +392,6 @@ static const void *cmsx_profileOtherOnEnter(void)
     cmsx_itermThrottleThreshold = pidProfile->itermThrottleThreshold;
 
     cmsx_throttleBoost = pidProfile->throttle_boost;
-    cmsx_thrustLinearization = pidProfile->thrustLinearization;
     cmsx_motorOutputLimit = pidProfile->motor_output_limit;
     cmsx_autoProfileCellCount = pidProfile->auto_profile_cell_count;
 
@@ -436,7 +434,6 @@ static const void *cmsx_profileOtherOnExit(const OSD_Entry *self)
     pidProfile->itermThrottleThreshold = cmsx_itermThrottleThreshold;
 
     pidProfile->throttle_boost = cmsx_throttleBoost;
-    pidProfile->thrustLinearization = cmsx_thrustLinearization;
     pidProfile->motor_output_limit = cmsx_motorOutputLimit;
     pidProfile->auto_profile_cell_count = cmsx_autoProfileCellCount;
 
@@ -479,9 +476,6 @@ static const OSD_Entry cmsx_menuProfileOtherEntries[] = {
     { "AG THR",      OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_itermThrottleThreshold, 20,   1000,  1  }   , 0 },
 #ifdef USE_THROTTLE_BOOST
     { "THR BOOST",   OME_UINT8,  NULL, &(OSD_UINT8_t)  { &cmsx_throttleBoost,          0,    100,   1  }   , 0 },
-#endif
-#ifdef USE_THRUST_LINEARIZATION
-    { "THR LINEAR",  OME_UINT8,  NULL, &(OSD_UINT8_t)  { &cmsx_thrustLinearization,    0,    150,   1  }   , 0 },
 #endif
 #ifdef USE_ITERM_RELAX
     { "I_RELAX",         OME_TAB,    NULL, &(OSD_TAB_t)     { &cmsx_iterm_relax,        ITERM_RELAX_COUNT - 1,      lookupTableItermRelax       }, 0 },

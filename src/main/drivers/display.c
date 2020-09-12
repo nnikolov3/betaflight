@@ -108,9 +108,9 @@ void displayHeartbeat(displayPort_t *instance)
     instance->vTable->heartbeat(instance);
 }
 
-void displayRedraw(displayPort_t *instance)
+void displayResync(displayPort_t *instance)
 {
-    instance->vTable->redraw(instance);
+    instance->vTable->resync(instance);
 }
 
 uint16_t displayTxBytesFree(const displayPort_t *instance)
@@ -153,12 +153,12 @@ bool displayWriteFontCharacter(displayPort_t *instance, uint16_t addr, const osd
     return false;
 }
 
-bool displayCheckReady(displayPort_t *instance, bool rescan)
+bool displayIsReady(displayPort_t *instance)
 {
-    if (instance->vTable->checkReady) {
-        return instance->vTable->checkReady(instance, rescan);
+    if (instance->vTable->isReady) {
+        return instance->vTable->isReady(instance);
     }
-    // Drivers that don't provide a checkReady method are
+    // Drivers that don't provide an isReady method are
     // assumed to be immediately ready (either by actually
     // begin ready very quickly or by blocking)
     return true;

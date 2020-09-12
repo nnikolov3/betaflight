@@ -50,7 +50,7 @@
 #ifdef STM32F4
 #define USE_SRAM2
 #if defined(STM32F40_41xxx)
-#define USE_FAST_DATA
+#define USE_FAST_RAM
 #endif
 #define USE_DSHOT
 #define USE_DSHOT_BITBANG
@@ -82,7 +82,7 @@
 #ifdef STM32F7
 #define USE_SRAM2
 #define USE_ITCM_RAM
-#define USE_FAST_DATA
+#define USE_FAST_RAM
 #define USE_DSHOT
 #define USE_DSHOT_BITBANG
 #define USE_DSHOT_TELEMETRY
@@ -108,7 +108,7 @@
 
 #ifdef STM32H7
 #define USE_ITCM_RAM
-#define USE_FAST_DATA
+#define USE_FAST_RAM
 #define USE_DSHOT
 #define USE_DSHOT_TELEMETRY
 #define USE_DSHOT_TELEMETRY_STATS
@@ -160,13 +160,13 @@
 #define CCM_CODE
 #endif
 
-#ifdef USE_FAST_DATA
-#define FAST_DATA_ZERO_INIT             __attribute__ ((section(".fastram_bss"), aligned(4)))
-#define FAST_DATA                    __attribute__ ((section(".fastram_data"), aligned(4)))
+#ifdef USE_FAST_RAM
+#define FAST_RAM_ZERO_INIT             __attribute__ ((section(".fastram_bss"), aligned(4)))
+#define FAST_RAM                    __attribute__ ((section(".fastram_data"), aligned(4)))
 #else
-#define FAST_DATA_ZERO_INIT
-#define FAST_DATA
-#endif // USE_FAST_DATA
+#define FAST_RAM_ZERO_INIT
+#define FAST_RAM
+#endif // USE_FAST_RAM
 
 #if defined(STM32F4) || defined (STM32H7)
 // Data in RAM which is guaranteed to not be reset on hot reboot
@@ -364,10 +364,4 @@
 #define USE_PROFILE_NAMES
 #define USE_SERIALRX_SRXL2     // Spektrum SRXL2 protocol
 #define USE_INTERPOLATED_SP
-<<<<<<< HEAD
-#define USE_CUSTOM_BOX_NAMES
-#define USE_BATTERY_VOLTAGE_SAG_COMPENSATION
-#define USE_RX_MSP_OVERRIDE
-=======
->>>>>>> 88a5996bb... added riscv
 #endif

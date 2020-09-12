@@ -115,7 +115,7 @@ static int crsfHeartbeat(displayPort_t *displayPort)
     return 0;
 }
 
-static void crsfRedraw(displayPort_t *displayPort)
+static void crsfResync(displayPort_t *displayPort)
 {
     displayPort->rows = crsfScreen.rows;
     displayPort->cols = crsfScreen.cols;
@@ -137,7 +137,7 @@ static const displayPortVTable_t crsfDisplayPortVTable = {
     .writeChar = crsfWriteChar,
     .isTransferInProgress = crsfIsTransferInProgress,
     .heartbeat = crsfHeartbeat,
-    .redraw = crsfRedraw,
+    .resync = crsfResync,
     .isSynced = crsfIsSynced,
     .txBytesFree = crsfTxBytesFree,
     .layerSupported = NULL,
@@ -174,7 +174,7 @@ void crsfDisplayPortSetDimensions(uint8_t rows, uint8_t cols)
 {
     crsfScreen.rows = MIN(rows, CRSF_DISPLAY_PORT_ROWS_MAX);
     crsfScreen.cols = MIN(cols, CRSF_DISPLAY_PORT_COLS_MAX);
-    crsfRedraw(&crsfDisplayPort);
+    crsfResync(&crsfDisplayPort);
 }
 
 void crsfDisplayPortRefresh(void)
@@ -191,11 +191,6 @@ void crsfDisplayPortRefresh(void)
 int crsfDisplayPortNextRow(void)
 {
     const timeMs_t currentTimeMs = millis();
-<<<<<<< HEAD
-    const bool delayExpired = (currentTimeMs > delayTransportUntilMs);
-    const bool cmsReady = (cmsInMenu && (pCurrentDisplay == &crsfDisplayPort));
-    return (bool)(delayExpired && cmsReady);
-=======
     if (currentTimeMs < delayTransportUntilMs) {
         return -1;
     }
@@ -205,7 +200,6 @@ int crsfDisplayPortNextRow(void)
         }
     }
     return -1;
->>>>>>> 88a5996bb... added riscv
 }
 
 displayPort_t *displayPortCrsfInit()

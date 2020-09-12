@@ -61,7 +61,6 @@ bool cliMode = false;
 #include "drivers/accgyro/accgyro.h"
 #include "drivers/adc.h"
 #include "drivers/buf_writer.h"
-#include "drivers/bus_i2c.h"
 #include "drivers/bus_spi.h"
 #include "drivers/dma.h"
 #include "drivers/dma_reqmap.h"
@@ -288,8 +287,6 @@ static const char *mcuTypeNames[] = {
     "H743 (Rev.X)",
     "H743 (Rev.V)",
 };
-
-static const char *configurationStates[] = { "UNCONFIGURED", "CUSTOM DEFAULTS", "CONFIGURED" };
 
 typedef enum dumpFlags_e {
     DUMP_MASTER = (1 << 0),
@@ -947,20 +944,7 @@ static void cliShowParseError(void)
 
 static void cliShowArgumentRangeError(char *name, int min, int max)
 {
-<<<<<<< HEAD
-    cliPrintErrorLinef(cmdName, "INVALID ARGUMENT COUNT", cmdName);
-}
-
-static void cliShowArgumentRangeError(const char *cmdName, char *name, int min, int max)
-{
-    if (name) {
-        cliPrintErrorLinef(cmdName, "%s NOT BETWEEN %d AND %d", name, min, max);
-    } else {
-        cliPrintErrorLinef(cmdName, "ARGUMENT OUT OF RANGE");
-    }
-=======
     cliPrintErrorLinef("%s NOT BETWEEN %d AND %d", name, min, max);
->>>>>>> 88a5996bb... added riscv
 }
 
 static const char *nextArg(const char *currentArg)
@@ -4620,27 +4604,12 @@ static void cliStatus(char *cmdline)
     // Stack and config sizes and usages
 
     cliPrintf("Stack size: %d, Stack address: 0x%x", stackTotalSize(), stackHighMem());
-#ifdef USE_STACK_CHECK
+#ifdef STACK_CHECK
     cliPrintf(", Stack used: %d", stackUsedSize());
 #endif
     cliPrintLinefeed();
 
-    cliPrintLinef("Configuration: %s, size: %d, max available: %d", configurationStates[systemConfigMutable()->configurationState], getEEPROMConfigSize(), getEEPROMStorageSize());
-
-    // Devices
-#if defined(USE_SPI) || defined(USE_I2C)
-    cliPrint("Devices detected:");
-#if defined(USE_SPI)
-    cliPrintf(" SPI:%d", spiGetRegisteredDeviceCount());
-#if defined(USE_I2C)
-    cliPrint(",");
-#endif
-#endif
-#if defined(USE_I2C)
-    cliPrintf(" I2C:%d", i2cGetRegisteredDeviceCount());
-#endif
-    cliPrintLinefeed();
-#endif
+    cliPrintLinef("Config size: %d, Max available config: %d", getEEPROMConfigSize(), getEEPROMStorageSize());
 
     // Sensors
 

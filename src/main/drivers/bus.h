@@ -71,4 +71,3 @@ bool busReadRegisterBuffer(const busDevice_t *bus, uint8_t reg, uint8_t *data, u
 uint8_t busReadRegister(const busDevice_t *bus, uint8_t reg);
 bool busReadRegisterBufferStart(const busDevice_t *busdev, uint8_t reg, uint8_t *data, uint8_t length);
 bool busBusy(const busDevice_t *busdev, bool *error);
-void busDeviceRegister(const busDevice_t *busdev);

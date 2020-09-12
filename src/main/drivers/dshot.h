@@ -88,5 +88,3 @@ bool isDshotMotorTelemetryActive(uint8_t motorIndex);
 bool isDshotTelemetryActive(void);
 
 int16_t getDshotTelemetryMotorInvalidPercent(uint8_t motorIndex);
-
-void validateAndfixMotorOutputReordering(uint8_t *array, const unsigned size);

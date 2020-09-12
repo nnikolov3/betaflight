@@ -144,6 +144,17 @@ static void crsfFinalize(sbuf_t *dst)
     crsfRxWriteTelemetryData(sbufPtr(dst), sbufBytesRemaining(dst));
 }
 
+static int crsfFinalizeBuf(sbuf_t *dst, uint8_t *frame)
+{
+    crc8_dvb_s2_sbuf_append(dst, &crsfFrame[2]); // start at byte 2, since CRC does not include device address and frame length
+    sbufSwitchToReader(dst, crsfFrame);
+    const int frameSize = sbufBytesRemaining(dst);
+    for (int ii = 0; sbufBytesRemaining(dst); ++ii) {
+        frame[ii] = sbufReadU8(dst);
+    }
+    return frameSize;
+}
+
 /*
 CRSF frame has the structure:
 <Device address> <Frame length> <Type> <Payload> <CRC>
@@ -570,19 +581,7 @@ void handleCrsfTelemetry(timeUs_t currentTimeUs)
     }
 }
 
-#if defined(UNIT_TEST)
-static int crsfFinalizeBuf(sbuf_t *dst, uint8_t *frame)
-{
-    crc8_dvb_s2_sbuf_append(dst, &crsfFrame[2]); // start at byte 2, since CRC does not include device address and frame length
-    sbufSwitchToReader(dst, crsfFrame);
-    const int frameSize = sbufBytesRemaining(dst);
-    for (int ii = 0; sbufBytesRemaining(dst); ++ii) {
-        frame[ii] = sbufReadU8(dst);
-    }
-    return frameSize;
-}
-
-STATIC_UNIT_TESTED int getCrsfFrame(uint8_t *frame, crsfFrameType_e frameType)
+int getCrsfFrame(uint8_t *frame, crsfFrameType_e frameType)
 {
     sbuf_t crsfFrameBuf;
     sbuf_t *sbuf = &crsfFrameBuf;
@@ -608,5 +607,4 @@ STATIC_UNIT_TESTED int getCrsfFrame(uint8_t *frame, crsfFrameType_e frameType)
     const int frameSize = crsfFinalizeBuf(sbuf, frame);
     return frameSize;
 }
-#endif
 #endif

@@ -177,5 +177,3 @@ bool spiBusTransactionTransfer(const busDevice_t *bus, const uint8_t *txData, ui
 
 struct spiPinConfig_s;
 void spiPinConfigure(const struct spiPinConfig_s *pConfig);
-void spiBusDeviceRegister(const busDevice_t *bus);
-uint8_t spiGetRegisteredDeviceCount(void);

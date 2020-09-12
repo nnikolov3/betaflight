@@ -30,7 +30,7 @@ uint8_t debugMode;
 uint32_t sectionTimes[2][4];
 #endif
 
-// Please ensure that these names are aligned with the enum values defined in 'debug.h' - for OSD be sure the name is unique with 12 chars.
+// Please ensure that these names are aligned with the enum values defined in 'debug.h'
 const char * const debugModeNames[DEBUG_COUNT] = {
     "NONE",
     "CYCLETIME",
@@ -60,7 +60,7 @@ const char * const debugModeNames[DEBUG_COUNT] = {
     "SBUS",
     "FPORT",
     "RANGEFINDER",
-    "RNGFNDR_QUALITY",
+    "RANGEFINDER_QUALITY",
     "LIDAR_TF",
     "ADC_INTERNAL",
     "RUNAWAY_TAKEOFF",
@@ -73,7 +73,7 @@ const char * const debugModeNames[DEBUG_COUNT] = {
     "ACRO_TRAINER",
     "RC_SMOOTHING",
     "RX_SIGNAL_LOSS",
-    "RC_SMOOTH_RATE",
+    "RC_SMOOTHING_RATE",
     "ANTI_GRAVITY",
     "DYN_LPF",
     "RX_SPEKTRUM_SPI",
@@ -84,9 +84,9 @@ const char * const debugModeNames[DEBUG_COUNT] = {
     "AC_ERROR",
     "DUAL_GYRO_SCALED",
     "DSHOT_RPM_ERRORS",
-    "CRSF_LS_UPLINK",
-    "CRSF_LS_PWR",
-    "CRSF_LS_DOWN",
+    "CRSF_LINK_STATISTICS_UPLINK",
+    "CRSF_LINK_STATISTICS_PWR",
+    "CRSF_LINK_STATISTICS_DOWN",
     "BARO",
     "GPS_RESCUE_THROTTLE_PID",
     "DYN_IDLE",
@@ -94,10 +94,4 @@ const char * const debugModeNames[DEBUG_COUNT] = {
     "FF_INTERPOLATED",
     "BLACKBOX_OUTPUT",
     "GYRO_SAMPLE",
-<<<<<<< HEAD
-    "RX_TIMING",
-    "D_LPF",
-    "VTX_TRAMP",
-=======
->>>>>>> 88a5996bb... added riscv
 };

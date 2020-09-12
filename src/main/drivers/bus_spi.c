@@ -34,8 +34,6 @@
 #include "drivers/io.h"
 #include "drivers/rcc.h"
 
-static uint8_t spiRegisteredDeviceCount = 0;
-
 spiDevice_t spiDevice[SPIDEV_COUNT];
 
 SPIDevice spiDeviceByInstance(SPI_TypeDef *instance)
@@ -287,18 +285,6 @@ bool spiBusTransactionReadRegisterBuffer(const busDevice_t *bus, uint8_t reg, ui
     return spiBusReadRegisterBuffer(bus, reg, data, length);
 }
 #endif // USE_SPI_TRANSACTION
-
-void spiBusDeviceRegister(const busDevice_t *bus)
-{
-    UNUSED(bus);
-
-    spiRegisteredDeviceCount++;
-}
-
-uint8_t spiGetRegisteredDeviceCount(void)
-{
-    return spiRegisteredDeviceCount;
-}
 #endif
 
 

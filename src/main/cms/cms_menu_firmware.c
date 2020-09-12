@@ -39,10 +39,7 @@
 
 #include "drivers/system.h"
 
-#include "fc/board_info.h"
 #include "fc/runtime_config.h"
-
-#include "pg/board.h"
 
 #include "sensors/acceleration.h"
 #include "sensors/barometer.h"
@@ -184,22 +181,6 @@ static CMS_Menu cmsx_menuCalibration = {
 
 // Info
 
-<<<<<<< HEAD
-#if defined(USE_BOARD_INFO)
-static char manufacturerId[MAX_MANUFACTURER_ID_LENGTH + 1];
-static char boardName[MAX_BOARD_NAME_LENGTH + 1];
-
-static const void *cmsx_FirmwareInit(displayPort_t *pDisp)
-{
-    UNUSED(pDisp);
-
-    strncpy(manufacturerId, getManufacturerId(), MAX_MANUFACTURER_ID_LENGTH + 1);
-    strncpy(boardName, getBoardName(), MAX_BOARD_NAME_LENGTH + 1);
-
-    return NULL;
-}
-#endif
-=======
 static char infoGitRev[GIT_SHORT_REVISION_LENGTH + 1];
 static char infoTargetName[] = __TARGET__;
 
@@ -218,23 +199,13 @@ static const void *cmsx_FirmwareInit(void)
 
     return NULL;
 }
->>>>>>> 88a5996bb... added riscv
 
 static const OSD_Entry menuFirmwareEntries[] = {
     { "--- INFO ---", OME_Label, NULL, NULL, 0 },
     { "FWID", OME_String, NULL, FC_FIRMWARE_IDENTIFIER, 0 },
     { "FWVER", OME_String, NULL, FC_VERSION_STRING, 0 },
-<<<<<<< HEAD
-    { "GITREV", OME_String, NULL, __REVISION__, 0 },
-    { "TARGET", OME_String, NULL, __TARGET__, 0 },
-#if defined(USE_BOARD_INFO)
-    { "MFR", OME_String, NULL, manufacturerId, 0 },
-    { "BOARD", OME_String, NULL, boardName, 0 },
-#endif
-=======
     { "GITREV", OME_String, NULL, infoGitRev, 0 },
     { "TARGET", OME_String, NULL, infoTargetName, 0 },
->>>>>>> 88a5996bb... added riscv
     { "--- SETUP ---", OME_Label, NULL, NULL, 0 },
     { "CALIBRATE",     OME_Submenu, cmsMenuChange, &cmsx_menuCalibration, 0},
     { "BACK", OME_Back, NULL, NULL, 0 },
@@ -246,15 +217,7 @@ CMS_Menu cmsx_menuFirmware = {
     .GUARD_text = "MENUFIRMWARE",
     .GUARD_type = OME_MENU,
 #endif
-<<<<<<< HEAD
-#if defined(USE_BOARD_INFO)
     .onEnter = cmsx_FirmwareInit,
-#else
-    .onEnter = NULL,
-#endif
-=======
-    .onEnter = cmsx_FirmwareInit,
->>>>>>> 88a5996bb... added riscv
     .onExit = NULL,
     .onDisplayUpdate = NULL,
     .entries = menuFirmwareEntries

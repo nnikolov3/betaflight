@@ -49,7 +49,6 @@
 #include "common/printf.h"
 #include "common/typeconversion.h"
 #include "common/utils.h"
-#include "common/unit.h"
 
 #include "config/feature.h"
 
@@ -141,11 +140,7 @@ escSensorData_t *osdEscDataCombined;
 
 STATIC_ASSERT(OSD_POS_MAX == OSD_POS(31,31), OSD_POS_MAX_incorrect);
 
-<<<<<<< HEAD
-PG_REGISTER_WITH_RESET_FN(osdConfig_t, osdConfig, PG_OSD_CONFIG, 9);
-=======
 PG_REGISTER_WITH_RESET_FN(osdConfig_t, osdConfig, PG_OSD_CONFIG, 7);
->>>>>>> 88a5996bb... added riscv
 
 PG_REGISTER_WITH_RESET_FN(osdElementConfig_t, osdElementConfig, PG_OSD_ELEMENT_CONFIG, 0);
 
@@ -289,7 +284,7 @@ void pgResetFn_osdConfig(osdConfig_t *osdConfig)
     osdStatSetState(OSD_STAT_BLACKBOX_NUMBER, true);
     osdStatSetState(OSD_STAT_TIMER_2, true);
 
-    osdConfig->units = UNIT_METRIC;
+    osdConfig->units = OSD_UNIT_METRIC;
 
     // Enable all warnings by default
     for (int i=0; i < OSD_WARNING_COUNT; i++) {
@@ -428,9 +423,14 @@ void osdInit(displayPort_t *osdDisplayPortToUse, osdDisplayPortDevice_e displayP
     cmsDisplayPortRegister(osdDisplayPort);
 #endif
 
-    if (displayCheckReady(osdDisplayPort, true)) {
+    if (displayIsReady(osdDisplayPort)) {
         osdCompleteInitialization();
     }
+}
+
+bool osdInitialized(void)
+{
+    return osdDisplayPort;
 }
 
 static void osdResetStats(void)
@@ -781,7 +781,7 @@ static bool osdDisplayStat(int statistic, uint8_t displayRow)
     case OSD_STAT_TOTAL_DIST:
         #define METERS_PER_KILOMETER 1000
         #define METERS_PER_MILE      1609
-        if (osdConfig()->units == UNIT_IMPERIAL) {
+        if (osdConfig()->units == OSD_UNIT_IMPERIAL) {
             tfp_sprintf(buff, "%d%c", statsConfig()->stats_total_dist_m / METERS_PER_MILE, SYM_MILES);
         } else {
             tfp_sprintf(buff, "%d%c", statsConfig()->stats_total_dist_m / METERS_PER_KILOMETER, SYM_KM);
@@ -860,6 +860,14 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
     static bool osdStatsEnabled = false;
     static bool osdStatsVisible = false;
     static timeUs_t osdStatsRefreshTimeUs;
+
+    if (!osdIsReady) {
+        if (!displayIsReady(osdDisplayPort)) {
+            displayResync(osdDisplayPort);
+            return;
+        }
+        osdCompleteInitialization();
+    }
 
     // detect arm/disarm
     if (armState != ARMING_FLAG(ARMED)) {
@@ -963,14 +971,6 @@ STATIC_UNIT_TESTED void osdRefresh(timeUs_t currentTimeUs)
 void osdUpdate(timeUs_t currentTimeUs)
 {
     static uint32_t counter = 0;
-
-    if (!osdIsReady) {
-        if (!displayCheckReady(osdDisplayPort, false)) {
-            return;
-        }
-
-        osdCompleteInitialization();
-    }
 
     if (isBeeperOn()) {
         showVisualBeeper = true;

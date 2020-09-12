@@ -68,8 +68,4 @@ bool dshotCommandQueueEmpty(void);
 bool dshotCommandIsProcessing(void);
 uint8_t dshotCommandGetCurrent(uint8_t index);
 bool dshotCommandOutputIsEnabled(uint8_t motorCount);
-<<<<<<< HEAD
-bool dshotStreamingCommandsAreEnabled(void);
-=======
 bool dshotCommandsAreEnabled(void);
->>>>>>> 88a5996bb... added riscv

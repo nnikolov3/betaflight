@@ -211,18 +211,6 @@ static gyroSpiDetectFn_t gyroSpiDetectFnTable[] = {
 #ifdef USE_GYRO_SPI_ICM20689
     icm20689SpiDetect,  // icm20689SpiDetect detects ICM20602 and ICM20689
 #endif
-<<<<<<< HEAD
-#ifdef USE_ACCGYRO_LSM6DSO
-    lsm6dsoDetect,
-#endif
-#ifdef USE_ACCGYRO_BMI160
-    bmi160Detect,
-#endif
-#ifdef USE_ACCGYRO_BMI270
-    bmi270Detect,
-#endif
-=======
->>>>>>> 88a5996bb... added riscv
 #ifdef USE_GYRO_SPI_ICM42605
     icm42605SpiDetect,
 #endif
@@ -259,7 +247,6 @@ static bool detectSPISensorsAndUpdateDetectionResult(gyroDev_t *gyro, const gyro
         sensor = (gyroSpiDetectFnTable[index])(&gyro->bus);
         if (sensor != MPU_NONE) {
             gyro->mpuDetectionResult.sensor = sensor;
-            busDeviceRegister(&gyro->bus);
 
             return true;
         }
@@ -306,7 +293,6 @@ bool mpuDetect(gyroDev_t *gyro, const gyroDeviceConfig_t *config)
         bool ack = busReadRegisterBuffer(&gyro->bus, MPU_RA_WHO_AM_I, &sig, 1);
 
         if (ack) {
-            busDeviceRegister(&gyro->bus);
             // If an MPU3050 is connected sig will contain 0.
             uint8_t inquiryResult;
             ack = busReadRegisterBuffer(&gyro->bus, MPU_RA_WHO_AM_I_LEGACY, &inquiryResult, 1);

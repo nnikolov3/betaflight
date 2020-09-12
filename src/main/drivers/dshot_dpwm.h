@@ -41,7 +41,7 @@
 
 
 typedef uint8_t loadDmaBufferFn(uint32_t *dmaBuffer, int stride, uint16_t packet);  // function pointer used to encode a digital motor value into the DMA buffer representation
-extern FAST_DATA_ZERO_INIT loadDmaBufferFn *loadDmaBuffer;
+extern FAST_RAM_ZERO_INIT loadDmaBufferFn *loadDmaBuffer;
 uint8_t loadDmaBufferDshot(uint32_t *dmaBuffer, int stride, uint16_t packet);
 uint8_t loadDmaBufferProshot(uint32_t *dmaBuffer, int stride, uint16_t packet);
 
@@ -65,7 +65,7 @@ motorDevice_t *dshotPwmDevInit(const struct motorDevConfig_s *motorConfig, uint1
 #elif defined(STM32G4)
 #define DSHOT_DMA_BUFFER_ATTRIBUTE DMA_RAM_W
 #elif defined(STM32F7)
-#define DSHOT_DMA_BUFFER_ATTRIBUTE FAST_DATA_ZERO_INIT
+#define DSHOT_DMA_BUFFER_ATTRIBUTE FAST_RAM_ZERO_INIT
 #else
 #define DSHOT_DMA_BUFFER_ATTRIBUTE // None
 #endif
@@ -158,7 +158,7 @@ motorDmaOutput_t *getMotorDmaOutput(uint8_t index);
 bool isMotorProtocolDshot(void);
 
 void pwmWriteDshotInt(uint8_t index, uint16_t value);
-bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t motorIndex, uint8_t reorderedMotorIndex, motorPwmProtocolTypes_e pwmProtocolType, uint8_t output);
+bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t motorIndex, motorPwmProtocolTypes_e pwmProtocolType, uint8_t output);
 #ifdef USE_DSHOT_TELEMETRY
 bool pwmStartDshotMotorUpdate(void);
 #endif

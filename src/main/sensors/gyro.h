@@ -86,26 +86,6 @@ typedef struct gyro_s {
 #endif
 
     uint16_t accSampleRateHz;
-<<<<<<< HEAD
-    uint8_t gyroToUse;
-    uint8_t gyroDebugMode;
-    bool gyroHasOverflowProtection;
-    bool useDualGyroDebugging;
-    flight_dynamics_index_t gyroDebugAxis;
-
-#ifdef USE_DYN_LPF
-    uint8_t dynLpfFilter;
-    uint16_t dynLpfMin;
-    uint16_t dynLpfMax;
-    uint8_t dynLpfCurveExpo;
-#endif
-
-#ifdef USE_GYRO_OVERFLOW_CHECK
-    uint8_t overflowAxisMask;
-#endif
-
-=======
->>>>>>> 88a5996bb... added riscv
 } gyro_t;
 
 extern gyro_t gyro;
@@ -183,12 +163,6 @@ typedef struct gyroConfig_s {
     uint16_t dyn_notch_min_hz;
 
     uint8_t  gyro_filter_debug_axis;
-<<<<<<< HEAD
-
-    uint8_t gyrosDetected; // What gyros should detection be attempted for on startup. Automatically set on first startup.
-    uint8_t dyn_lpf_curve_expo; // set the curve for dynamic gyro lowpass filter
-=======
->>>>>>> 88a5996bb... added riscv
 } gyroConfig_t;
 
 PG_DECLARE(gyroConfig_t, gyroConfig);
