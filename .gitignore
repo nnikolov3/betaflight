@@ -11,11 +11,11 @@
 .settings
 .cproject
 .project
-.clang-format
 obj/
 patches/
 startup_stm32f10x_md_gcc.s
 .idea
+.minicom*
 
 # script-generated files
 docs/Manual.pdf
