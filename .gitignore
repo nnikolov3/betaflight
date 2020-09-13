@@ -10,6 +10,8 @@
 .project
 .settings
 .cproject
+.project
+.clang-format
 obj/
 patches/
 startup_stm32f10x_md_gcc.s
